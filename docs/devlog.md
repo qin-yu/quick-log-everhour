@@ -107,3 +107,9 @@ Plan steps 4 (read-only panel) and 5 (refresh on change) became one commit. The 
 **Testing limit:** the browser tool refuses `chrome-extension://` URLs, so the `?tab=` debug page can't be driven from here. Write-path verification on the test board is done by the user.
 
 The user asked to commit this step; no failures were reported. Point-by-point test results (Undo and badge sync) are still pending. Next: add new entries from the panel.
+
+## 2026-11-18 — Mock harness for the panel UI
+
+The browser tool refuses `chrome-extension://` URLs, so the real panel can't be clicked through from here. `dev/serve.py` serves the repo on localhost and injects `dev/mock-chrome.js` into the panel page. That file is a fake `chrome.*` with made-up cards, lists and records, implementing the same ops as the hook. `window.__mock.calls` records what the panel sent and `window.__mock.fail` forces an op to fail.
+
+What it covers: rendering, forms, validation, focus, Undo and the exact ops and patches the panel sends. What it doesn't cover: the hook, the bridge and Everhour itself, which still need a run on the test board.

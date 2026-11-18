@@ -55,6 +55,7 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 
 - Install: open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick this folder. Open a Trello board that has Everhour, then click the extension icon to open the panel.
 - Unit tests: `node --test tests/` (or `npm test`). These cover the pure helpers in `src/lib/`. `package.json` exists only to mark the folder as ES modules for Node; there are no dependencies.
+- Panel UI without the extension: `python3 dev/serve.py`, then open <http://localhost:8765/src/sidepanel/index.html>. It injects `dev/mock-chrome.js`, a fake `chrome.*` with made-up cards and records; `window.__mock.calls` lists every op the panel sent and `window.__mock.fail = '<op>'` makes that op fail. Browser automation can't open `chrome-extension://` pages, so this is how the panel gets driven.
 - End to end: add time on the test board via Everhour. The panel should update without a reload. Edit and delete the record from the panel, then check Everhour's Edit time view.
 
 ## Conventions
