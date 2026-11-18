@@ -66,6 +66,10 @@ async function op(name, args = {}) {
     throw err;
   }
   if (!res) throw new Error('No answer from Everhour in this tab. Reload the Trello tab.');
+  // The panel loads fresh from disk, but the page scripts only update after an extension reload plus a tab reload.
+  if (!res.ok && /^Unknown request /.test(res.error ?? '')) {
+    throw new Error('This Trello tab is still running an older trello-fast. Click ↻ on trello-fast in chrome://extensions, then reload this Trello tab.');
+  }
   if (!res.ok) throw new Error(res.error || 'Everhour request failed');
   return res.data;
 }

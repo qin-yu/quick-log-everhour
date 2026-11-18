@@ -142,3 +142,9 @@ User request: add new entries straight from the panel.
 - delete followed by Undo.
 
 **Open:** a real run on the test board of add, edit, delete and Undo, checking that Everhour's badge and Edit time agree.
+
+## 2026-11-18 — Stale page scripts after an update
+
+The user's first try at logging returned `Unknown request addTime`. The panel page is read fresh from disk, but the hook and bridge in the Trello page are the copies Chrome injected when the tab loaded. A newer panel was talking to an older hook. Fix for the user: ↻ on trello-fast in `chrome://extensions`, then reload the Trello tab. Re-injecting from the service worker wouldn't help: the hook has to trap `TrelloPowerUp` at `document_start`, before Everhour initialises, so only a tab reload gets a working hook.
+
+The panel now turns any `Unknown request …` from the hook into that instruction, so future version mismatches explain themselves.
