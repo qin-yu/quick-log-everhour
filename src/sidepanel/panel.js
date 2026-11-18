@@ -2,10 +2,11 @@ import {
   WEEKDAYS, addDays, formatDuration, formatHours, parseDuration, parseYMD, shortDate, sortRecent, todayYMD, weekDays,
   weekLabel, weekMatrix, weekStart,
 } from '../lib/time.js';
-import { editPatches, enteredAt, myRecords, normaliseRecord } from '../lib/everhour.js';
+import { cardChoices, editPatches, enteredAt, myRecords, normaliseRecord } from '../lib/everhour.js';
 
 const RECENT_PAGE = 15;
 const MAX_ENTRY = 24 * 3600;
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const $ = (id) => document.getElementById(id);
 
 const state = {
@@ -137,9 +138,84 @@ function render() {
   $('week-label').textContent = weekLabel(state.monday);
   $('target').value = String(state.target);
   $('who').textContent = state.ctx ? `${state.ctx.member.fullName} · ${state.ctx.board.name}` : '';
+  renderAdd();
   renderWeek();
   renderRecent();
 }
+
+// ---------------------------------------------------------------- log new time
+const add = {
+  form: $('add'), card: $('add-card'), date: $('add-date'), time: $('add-time'), comment: $('add-comment'), error: $('add-error'),
+};
+let cardOptionsKey = '';
+
+// Today when looking at this week, otherwise the Monday of the week on screen.
+const defaultAddDate = () => (weekStart(todayYMD()) === state.monday ? todayYMD() : state.monday);
+const isOpenCard = (id) => !!id && state.cards.has(id) && !state.cards.get(id).closed;
+
+// The <select> is rebuilt only when the card list changes, so a refresh doesn't close it or lose the choice.
+function renderAdd() {
+  const ready = state.tabId != null && !!state.ctx;
+  add.form.hidden = !ready;
+  if (!ready) return;
+  const { recent, groups } = cardChoices([...state.cards.values()], state.mine);
+  const key = JSON.stringify([recent.map((c) => c.id), groups.map((g) => [g.list, g.cards.map((c) => [c.id, c.name])])]);
+  if (key === cardOptionsKey) return;
+  cardOptionsKey = key;
+  const keep = add.card.value;
+  const option = (c) => h('option', { value: c.id }, c.name);
+  add.card.replaceChildren(
+    h('option', { value: '', disabled: true }, 'Choose a card…'),
+    ...(recent.length ? [h('optgroup', { label: 'Recently used' }, recent.map(option))] : []),
+    ...groups.map((g) => h('optgroup', { label: g.list }, g.cards.map(option))));
+  add.card.value = isOpenCard(keep) ? keep : recent[0]?.id ?? '';
+}
+
+function prefillAdd(cardId, date) {
+  if (isOpenCard(cardId)) add.card.value = cardId;
+  add.date.value = date;
+  add.error.hidden = true;
+  add.form.scrollIntoView({ block: 'nearest' });
+  add.time.focus();
+  add.time.select();
+}
+
+add.form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const cardId = add.card.value;
+  const seconds = parseDuration(add.time.value);
+  const date = add.date.value;
+  const comment = add.comment.value.trim();
+  const fail = (message, field) => {
+    add.error.textContent = message;
+    add.error.hidden = false;
+    field?.focus();
+  };
+  if (!isOpenCard(cardId)) return fail('Choose a card.', add.card);
+  if (seconds == null) return fail('Time not understood. Try 1.5, 1:30, 90m or 1h 30m.', add.time);
+  if (seconds > MAX_ENTRY) return fail('At most 24 h in one entry.', add.time);
+  if (!YMD.test(date)) return fail('Pick a date.', add.date);
+  add.error.hidden = true;
+  const controls = [...add.form.elements];
+  controls.forEach((el) => { el.disabled = true; });
+  let rec;
+  try {
+    rec = await op('addTime', { cardId, date, time: seconds, comment });
+  } catch (err) {
+    controls.forEach((el) => { el.disabled = false; });
+    return fail(String(err.message ?? err));
+  }
+  controls.forEach((el) => { el.disabled = false; });
+  add.time.value = '';
+  add.comment.value = '';
+  add.time.focus();
+  const id = Number(rec?.id) || null;
+  state.freshId = id;
+  if (weekStart(date) !== state.monday) { state.monday = weekStart(date); saveSettings(); }
+  setStatus(`Logged ${formatDuration(seconds)} on ${cardName(cardId)}, ${shortDate(date)}.`, 'note',
+    id ? { label: 'Undo', run: () => undoWrite({ id }, [{ time: 0 }]) } : null);
+  await load({ quiet: true });
+});
 
 function renderWeek() {
   const box = $('week');
@@ -165,7 +241,14 @@ function renderWeek() {
     WEEKDAYS[i].slice(0, 2), h('br'), String(parseYMD(d).getUTCDate())));
   const body = m.rows.map((row) => h('tr', {},
     h('td', { class: 'card' }, h('button', { title: `${row.cardName} — open card`, onClick: () => openCard(row.cardId) }, row.cardName)),
-    row.perDay.map((s, i) => h('td', { class: [s ? '' : 'zero', m.days[i] === today ? 'today' : ''].join(' ').trim() || null }, formatHours(s) || '·')),
+    row.perDay.map((s, i) => {
+      const loggable = isOpenCard(row.cardId);
+      return h('td', {
+        class: [s ? '' : 'zero', m.days[i] === today ? 'today' : '', loggable ? 'cell' : ''].join(' ').trim() || null,
+        title: loggable ? `Log time on ${row.cardName}, ${shortDate(m.days[i])}` : null,
+        onClick: loggable ? () => prefillAdd(row.cardId, m.days[i]) : null,
+      }, formatHours(s) || '·');
+    }),
     h('td', { class: 'sum' }, formatHours(row.total))));
   box.append(h('table', {},
     h('thead', {}, h('tr', {}, h('th', { class: 'card' }, 'Card'), dayHead, h('th', { class: 'sum' }, 'Σ'))),
@@ -250,7 +333,7 @@ function editForm(rec) {
     const seconds = parseDuration(dur.value);
     if (seconds == null) return showError(form, 'Time not understood. Try 1.5, 1:30, 90m or 1h 30m.');
     if (seconds > MAX_ENTRY) return showError(form, 'At most 24 h in one entry.');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date.value)) return showError(form, 'Pick a date.');
+    if (!YMD.test(date.value)) return showError(form, 'Pick a date.');
     const text = comment.value.trim();
     const patches = editPatches(rec, { seconds, date: date.value, comment: text === rec.comment.trim() ? undefined : text });
     if (!patches.length) return closeEditor();
@@ -323,6 +406,7 @@ async function saveSettings() {
 }
 function goWeek(monday) {
   state.monday = monday;
+  add.date.value = defaultAddDate();
   saveSettings();
   render();
 }
@@ -358,8 +442,9 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 (async function init() {
   state.windowId = (await chrome.windows.getCurrent()).id;
   const saved = await chrome.storage.local.get(['monday', 'target']);
-  if (typeof saved.monday === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(saved.monday)) state.monday = weekStart(saved.monday);
+  if (typeof saved.monday === 'string' && YMD.test(saved.monday)) state.monday = weekStart(saved.monday);
   if (Number(saved.target) > 0) state.target = Number(saved.target);
+  add.date.value = defaultAddDate();
   render();
   await load();
 })();

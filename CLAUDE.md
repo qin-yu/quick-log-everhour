@@ -9,7 +9,7 @@ Two pain points with Everhour's own UI inside Trello:
 1. Everhour's "Time" report doesn't update after you add time. After a page reload you have to click Time, filter to yourself and page back to the week you were looking at.
 2. When you mistype an entry it is hard to find again. Edit time needs a member filter and a date range before the entry shows up.
 
-The side panel shows **my week** (cards × Mon–Sun, totals against a 35 h target) and **my most recently entered records**, newest first. Each record can be edited or deleted in place. The panel stays on the chosen week and refreshes by itself whenever Everhour writes time.
+The side panel shows **my week** (cards × Mon–Sun, totals against a 35 h target) and **my most recently entered records**, newest first. Each record can be edited or deleted in place, with Undo. New time is logged from a form at the top, and clicking a cell in the week table prefills its card and day. The panel stays on the chosen week and refreshes by itself whenever Everhour writes time.
 
 ## Boards
 
@@ -33,9 +33,9 @@ side panel ──chrome.tabs.sendMessage(tabId)──► everhour-bridge (every 
 - `src/background.js` only makes the action icon open the side panel. Nothing is relayed through the service worker: the panel messages the tab directly and the bridges message the panel directly.
 - `src/content/everhour-hook.js` runs in the MAIN world:
   - in every Everhour frame it wraps `fetch` and reports successful POST/PUT to `/api/trello/time`;
-  - in the root frame it traps `window.TrelloPowerUp` to capture `t` and serves the bridge's requests.
+  - in the root frame it traps `window.TrelloPowerUp` to capture `t` and serves the bridge's requests: `context`, `cards` (with list names), `listTime`, `openCard`, `addTime` and `updateTime`. The write ops check that the card or record belongs to the signed-in member on this board.
 - `src/content/everhour-bridge.js` runs in the isolated world. It relays between `chrome.runtime` and the hook via DOM `CustomEvent`s with JSON-string details.
-- `src/lib/everhour.js` normalises records to `{id, date, seconds, comment, memberId, cardId, createdAt}`.
+- `src/lib/everhour.js` normalises records to `{id, date, seconds, comment, memberId, cardId, createdAt}`, turns an edit into per-field PUTs (`editPatches`) and orders the card picker (`cardChoices`).
 - `src/lib/time.js` holds pure helpers: ISO weeks (Mon–Sun), duration parsing (`1.5`, `1:30`, `90m`) and the card × weekday matrix.
 - `src/sidepanel/` holds the panel UI.
 
@@ -46,7 +46,7 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 ## Constraints
 
 - Never use the Trello REST API, and never modify Everhour's own DOM. All UI lives in the side panel.
-- Writes go only through explicit user actions in the panel (save or confirmed delete), using the same requests Everhour itself sends.
+- Writes go only through explicit user actions in the panel (log, save, confirmed delete or undo), using the same requests Everhour itself sends.
 - JWTs are minted per request with `t.jwt()` and never stored, logged or sent anywhere except `app.everhour.com/api`.
 - After any write, mirror Everhour's `applyReportedTime`: update the card's `shared` pluginData and broadcast `data-changed` on `BroadcastChannel('eh-' + t.secret.slice(0, 6))`. See `docs/everhour-api.md`.
 - Plain JavaScript ES modules with no build step and no dependencies, so the folder loads as an unpacked extension.

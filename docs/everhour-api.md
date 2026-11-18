@@ -80,7 +80,8 @@ if (record.card) {
 
 The extension doesn't hand-craft auth. Its MAIN-world hook in the root frame traps `window.TrelloPowerUp` before `power-up.min.js` defines it. It then wraps `initialize`, so each capability callback hands over its `t`; the hook keeps the board-context `t` from `board-buttons`. With that `t` it can:
 
-- mint a fresh JWT per request (`t.jwt(...)`);
-- read card names (`t.cards('id', 'name', 'url', 'shortLink', 'closed')`);
+- mint a fresh JWT per request: `t.jwt({state})` for the board-wide list and plain `t.jwt()` for single-record GET, PUT and POST, as Everhour does;
+- read card names and list placement (`t.cards('id', 'name', 'url', 'closed', 'idList', 'pos')` plus `t.lists('id', 'name')`);
+- add time with the same `POST /trello/time` body as Everhour's Add time, always using `t.getContext().member` as `memberId`;
 - open cards (`t.showCard(id)`);
 - update card pluginData and broadcast `data-changed`, exactly as Everhour does.

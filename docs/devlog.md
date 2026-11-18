@@ -113,3 +113,32 @@ The user asked to commit this step; no failures were reported. Point-by-point te
 The browser tool refuses `chrome-extension://` URLs, so the real panel can't be clicked through from here. `dev/serve.py` serves the repo on localhost and injects `dev/mock-chrome.js` into the panel page. That file is a fake `chrome.*` with made-up cards, lists and records, implementing the same ops as the hook. `window.__mock.calls` records what the panel sent and `window.__mock.fail` forces an op to fail.
 
 What it covers: rendering, forms, validation, focus, Undo and the exact ops and patches the panel sends. What it doesn't cover: the hook, the bridge and Everhour itself, which still need a run on the test board.
+
+## 2026-11-18 — Log new time from the panel
+
+User request: add new entries straight from the panel.
+
+**Built:**
+
+- A form at the top of the panel with card, date, time, a **Log** button and an optional comment. Enter submits. After logging, the card stays selected, time and comment clear and focus returns to time, so several entries can be typed in a row. The status line offers **Undo**, which sets time to 0 like a delete.
+- The card picker starts with "Recently used" (my last 8 distinct open cards by entry id), then every open card grouped by Trello list in board order (`cardChoices`, tested). Archived cards are left out. The `<select>` is rebuilt only when the card list changes, so background refreshes don't close it or reset it.
+- Date defaults to today when viewing this week, otherwise to the Monday of the week on screen. Logging into another week moves the panel to that week.
+- Clicking a cell in the week table fills the form with that card and day and focuses time. That's the quickest way to back-fill a day.
+- Hook op `addTime({cardId, date, time, comment})`:
+  - validates its input and checks the card is an open card on this board;
+  - POSTs `{memberId, cardId, date, time, comment}` with `memberId` from `t.getContext()`, exactly as Everhour's Add time does;
+  - then mirrors `applyReportedTime`.
+- The `cards` op now adds `listName` and `listPos` from `t.lists()`. If that call fails, the cards still load, just ungrouped.
+
+**Bug found with the harness:** `replaceChildren` doesn't flatten arrays, so the per-list option groups were missing and a stray text node could appear. Fixed by spreading the arrays.
+
+**Verified in the harness:**
+
+- logging an entry (`1:15` became `time: 4500`), with the table and latest entries updating and focus returning to time;
+- Undo of a log;
+- cell prefill, including no prefill for archived cards;
+- editing sends only `{time}`;
+- a failed delete shows the error, keeps the confirm open and re-enables the buttons;
+- delete followed by Undo.
+
+**Open:** a real run on the test board of add, edit, delete and Undo, checking that Everhour's badge and Edit time agree.

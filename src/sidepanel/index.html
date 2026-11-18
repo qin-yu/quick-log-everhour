@@ -18,6 +18,15 @@
   <div id="status" class="status" role="status" hidden></div>
 
   <main>
+    <form id="add" class="add" aria-label="Log time" autocomplete="off" hidden>
+      <select id="add-card" aria-label="Card" title="Card"></select>
+      <input id="add-date" type="date" aria-label="Date" title="Date" required>
+      <input id="add-time" placeholder="Time: 1.5 · 1:30 · 90m" aria-label="Time" title="Time: 1.5, 1:30, 90m or 1h 30m">
+      <button type="submit" class="primary">Log</button>
+      <input id="add-comment" placeholder="Comment (optional)" aria-label="Comment" maxlength="2000">
+      <div id="add-error" class="error" role="alert" hidden></div>
+    </form>
+
     <section id="week" class="week" aria-label="My week"></section>
 
     <section class="recent-section" aria-label="Latest entries">

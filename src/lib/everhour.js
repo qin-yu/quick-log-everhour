@@ -39,3 +39,26 @@ export function enteredAt(iso, now = new Date()) {
   if (d.toDateString() === now.toDateString()) return hm;
   return `${d.getDate()} ${d.toLocaleString('en-GB', { month: 'short' })} ${hm}`;
 }
+
+/**
+ * Card picker contents: my most recently used open cards first, then every open card grouped by list in board order.
+ * cards: [{id, name, closed, pos, listName, listPos}]; records: my normalised records.
+ */
+export function cardChoices(cards, records, recentMax = 8) {
+  const open = cards.filter((c) => !c.closed);
+  const byId = new Map(open.map((c) => [c.id, c]));
+  const recent = [];
+  for (const r of [...records].sort((a, b) => b.id - a.id)) {
+    if (recent.length >= recentMax) break;
+    const c = byId.get(r.cardId);
+    if (c && !recent.includes(c)) recent.push(c);
+  }
+  const rank = (c) => c.listPos ?? Number.MAX_SAFE_INTEGER;
+  const groups = new Map();
+  for (const c of [...open].sort((a, b) => rank(a) - rank(b) || (a.pos ?? 0) - (b.pos ?? 0))) {
+    const key = `${rank(c)}\u0000${c.listName ?? ''}`;
+    if (!groups.has(key)) groups.set(key, { list: c.listName ?? 'Other', cards: [] });
+    groups.get(key).cards.push(c);
+  }
+  return { recent, groups: [...groups.values()] };
+}

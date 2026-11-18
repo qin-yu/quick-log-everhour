@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { editPatches, enteredAt, myRecords, normaliseRecord } from '../src/lib/everhour.js';
+import { cardChoices, editPatches, enteredAt, myRecords, normaliseRecord } from '../src/lib/everhour.js';
 
 const raw = {
   id: '5826700', cardId: 'c1', boardId: 'b1', memberId: 'm1', date: '2026-11-17', time: 5400,
@@ -47,4 +47,19 @@ test('enteredAt shows time today and date otherwise', () => {
   assert.equal(enteredAt(new Date(2026, 10, 17, 22, 29).toISOString(), now), '17 Nov 22:29');
   assert.equal(enteredAt(null, now), '');
   assert.equal(enteredAt('nonsense', now), '');
+});
+
+test('cardChoices puts recently used open cards first, then lists in board order', () => {
+  const cards = [
+    { id: 'a', name: 'A', closed: false, pos: 2, listName: 'Doing', listPos: 1 },
+    { id: 'b', name: 'B', closed: false, pos: 1, listName: 'Doing', listPos: 1 },
+    { id: 'c', name: 'C', closed: false, pos: 1, listName: 'Backlog', listPos: 0 },
+    { id: 'd', name: 'D', closed: true, pos: 3, listName: 'Doing', listPos: 1 },
+    { id: 'e', name: 'E', closed: false, pos: 1 },
+  ];
+  const records = [{ id: 1, cardId: 'c' }, { id: 3, cardId: 'a' }, { id: 2, cardId: 'd' }, { id: 4, cardId: 'a' }, { id: 5, cardId: 'zz' }];
+  const { recent, groups } = cardChoices(cards, records);
+  assert.deepEqual(recent.map((c) => c.id), ['a', 'c']);
+  assert.deepEqual(groups.map((g) => [g.list, g.cards.map((c) => c.id)]), [['Backlog', ['c']], ['Doing', ['b', 'a']], ['Other', ['e']]]);
+  assert.equal(cardChoices(cards, records, 1).recent.length, 1);
 });

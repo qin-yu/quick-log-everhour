@@ -30,8 +30,9 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--fg); }
-button, input { font: inherit; color: inherit; }
+button, input, select { font: inherit; color: inherit; }
 button {
   border: 1px solid var(--line); background: var(--bg-soft); border-radius: 6px;
   padding: 3px 8px; cursor: pointer;
@@ -51,7 +52,6 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .week-label { flex: 1; text-align: center; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .status { display: flex; align-items: center; gap: 8px; margin: 8px 10px; padding: 6px 8px; border-radius: 6px; background: var(--accent-soft); }
-.status[hidden] { display: none; }
 .status > span { flex: 1; }
 .status.error { background: color-mix(in srgb, var(--danger) 15%, var(--bg)); color: var(--fg); }
 .status.note { background: color-mix(in srgb, var(--ok) 14%, var(--bg)); }
@@ -59,6 +59,12 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .status button.dismiss { color: var(--muted); font-weight: normal; }
 
 main { padding: 0 10px 10px; }
+
+/* log new time */
+form.add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-soft); }
+form.add select, form.add input { width: 100%; min-width: 0; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+form.add select, #add-comment, form.add .error { grid-column: 1 / -1; }
+form.add .error { color: var(--danger); font-size: 12px; }
 
 /* week table */
 .week { margin-top: 10px; }
@@ -76,6 +82,8 @@ td.card button { all: unset; cursor: pointer; display: block; overflow: hidden; 
 td.card button:hover { color: var(--accent); text-decoration: underline; }
 td.sum, th.sum { font-weight: 700; width: 13%; }
 td.zero { color: var(--line); }
+td.cell { cursor: pointer; }
+td.cell:hover { background: var(--accent-soft); color: var(--fg); }
 .today { background: var(--today); }
 tfoot td { font-weight: 700; border-bottom: 0; }
 .empty { color: var(--muted); padding: 12px 0; }
@@ -105,7 +113,6 @@ form.edit input { width: 100%; padding: 3px 6px; border: 1px solid var(--line); 
 form.edit .buttons { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; margin-top: 2px; }
 form.edit .buttons .spacer { flex: 1; }
 form.edit .error { grid-column: 1 / -1; color: var(--danger); font-size: 12px; }
-form.edit .error[hidden], .confirm .error[hidden] { display: none; }
 .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: color-mix(in srgb, var(--danger) 12%, var(--bg)); cursor: default; }
 .confirm > span { flex: 1; }
 .confirm .error { flex-basis: 100%; color: var(--danger); font-size: 12px; }

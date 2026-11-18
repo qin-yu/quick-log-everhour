@@ -133,12 +133,29 @@
     },
     async cards() {
       const t = await getT();
-      return t.cards('id', 'name', 'url', 'closed');
+      const [cards, lists] = await Promise.all([
+        t.cards('id', 'name', 'url', 'closed', 'idList', 'pos'),
+        t.lists('id', 'name').catch(() => []), // list names only group the picker; never fail the load over them
+      ]);
+      const listAt = new Map(lists.map((l, i) => [l.id, { name: l.name, pos: i }]));
+      return cards.map((c) => ({ ...c, listName: listAt.get(c.idList)?.name ?? null, listPos: listAt.get(c.idList)?.pos ?? null }));
     },
     async openCard({ cardId }) {
       const t = await getT();
       await t.showCard(cardId);
       return true;
+    },
+    // Same request as Everhour's Add time, always for the member who is signed in to Trello.
+    async addTime({ cardId, date, time, comment = '' }) {
+      if (typeof cardId !== 'string' || !/^[0-9a-f]{24}$/.test(cardId) || !PATCH_CHECKS.date(date)
+        || !PATCH_CHECKS.time(time) || time <= 0 || !PATCH_CHECKS.comment(comment)) throw new Error('Bad add request');
+      const t = await getT();
+      const { member } = t.getContext();
+      const cards = await t.cards('id', 'closed');
+      if (!cards.some((c) => c.id === cardId && !c.closed)) throw new Error('That card is not an open card on this board');
+      const rec = await api(t, 'POST', '/trello/time', { memberId: member, cardId, date, time, comment });
+      await applyReportedTime(t, rec);
+      return rec;
     },
     // patches: [{date}|{comment}|{time}], applied in order, one PUT each (like Everhour). [{time: 0}] deletes.
     async updateTime({ id, patches }) {
