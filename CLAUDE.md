@@ -19,23 +19,27 @@ The side panel shows **my week** (cards × Mon–Sun, totals against a 35 h targ
 
 ## Architecture
 
-Time data lives in Everhour, not Trello, so the Trello API isn't needed. Everhour's Power-Up UI runs in `app.everhour.com` iframes inside trello.com. The extension injects scripts into those iframes and calls Everhour's own `/api/trello/*` endpoints same-origin, reusing the Power-Up's existing auth. No API key is involved.
+Time data lives in Everhour, not Trello, so the Trello API isn't needed. Everhour's Power-Up runs in `app.everhour.com` iframes inside trello.com. Its hidden root frame (`/trello-powerup/?v=2`) is always loaded on a board page. The extension's MAIN-world hook in that frame captures the Power-Up client handle `t` that Trello passes to Everhour, then uses it the way Everhour itself does: `t.jwt()` for the `x-jira-addon-token` header, `t.cards()` for card names, `t.set()` to keep card totals in sync, and `t.showCard()` to open a card. No API key is involved and no token is stored.
 
 ```
-side panel ──runtime msg──► background (service worker) ──tabs.sendMessage(frameId)──► everhour-bridge (Everhour iframe)
-     ▲                                                                                     │ same-origin fetch /api/trello/*
-     └──────────── "time-changed" broadcast ◄── everhour-hook (MAIN world, every Everhour iframe) sees POST/PUT/DELETE
+side panel ──runtime msg──► background (service worker) ──tabs.sendMessage(frameId)──► everhour-bridge (root frame, isolated)
+     ▲                                                                                     │ DOM events
+     │                                                                                     ▼
+     │                                                         everhour-hook (root frame, MAIN): t.jwt() + fetch /api/trello/*
+     └──── "time-changed" ◄── bridge ◄── everhour-hook (MAIN, every Everhour frame): wraps fetch, sees POST/PUT /api/trello/time
 ```
 
-- `manifest.json` declares MV3, `sidePanel`, `storage` and content scripts on `https://app.everhour.com/trello-powerup/*` with `all_frames`.
-- `src/background.js` opens the side panel from the action icon, tracks which frame hosts the bridge in each tab, and relays messages.
-- `src/content/everhour-hook.js` runs in the MAIN world. It wraps `fetch`/XHR, captures the auth headers the Power-Up sends, and reports successful writes to time.
-- `src/content/everhour-bridge.js` runs in the isolated world. It executes the panel's requests (`me`, `listTime`, `updateTime`, `deleteTime`) and forwards `time-changed`.
-- `src/lib/everhour.js` builds requests and normalises records to `{id, date, seconds, comment, userId, cardId, cardName}`.
+- `manifest.json` declares MV3, `sidePanel`, `storage` and two content scripts on `https://app.everhour.com/trello-powerup/*` with `all_frames` and `document_start`: the hook (MAIN world) and the bridge (isolated).
+- `src/background.js` opens the side panel from the action icon, remembers which frame in each tab is the Everhour root frame, and relays panel requests to it and change notices from any frame to the panel.
+- `src/content/everhour-hook.js` runs in the MAIN world:
+  - in every Everhour frame it wraps `fetch` and reports successful POST/PUT to `/api/trello/time`;
+  - in the root frame it traps `window.TrelloPowerUp` to capture `t` and serves the bridge's requests.
+- `src/content/everhour-bridge.js` runs in the isolated world. It relays between `chrome.runtime` and the hook via DOM `CustomEvent`s with JSON-string details.
+- `src/lib/everhour.js` normalises records to `{id, date, seconds, comment, memberId, cardId, createdAt}`.
 - `src/lib/time.js` holds pure helpers: ISO weeks (Mon–Sun), duration parsing (`1.5`, `1:30`, `90m`) and the card × weekday matrix.
 - `src/sidepanel/` holds the panel UI.
 
-Everhour record IDs increase monotonically, so "most recently entered" means sorting by `id` descending.
+Everhour record IDs increase monotonically, so "most recently entered" means sorting by `id` descending. Records also carry `createdAt`. Delete is `PUT /trello/time/{id}` with `{time: 0}`, because Everhour has no DELETE.
 
 Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 
@@ -43,7 +47,8 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 
 - Never use the Trello REST API, and never modify Everhour's own DOM. All UI lives in the side panel.
 - Writes go only through explicit user actions in the panel (save or confirmed delete), using the same requests Everhour itself sends.
-- Captured auth headers stay in memory or `chrome.storage.session`. Never write them to `storage.local`, logs or files.
+- JWTs are minted per request with `t.jwt()` and never stored, logged or sent anywhere except `app.everhour.com/api`.
+- After any write, mirror Everhour's `applyReportedTime`: update the card's `shared` pluginData and broadcast `data-changed` on `BroadcastChannel('eh-' + t.secret.slice(0, 6))`. See `docs/everhour-api.md`.
 - Plain JavaScript ES modules with no build step and no dependencies, so the folder loads as an unpacked extension.
 
 ## Run and test

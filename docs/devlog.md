@@ -32,3 +32,33 @@ Added `src/lib/time.js` and `tests/time.test.js`, with 13 tests that pass under 
 - `weekMatrix` returns card × weekday seconds with row and day totals, rows sorted by total.
 
 Added a minimal `package.json` with `"type": "module"` and an `npm test` script. Chrome ignores it, and there are still no dependencies and no build step.
+
+## 2026-11-18 — Everhour API discovery
+
+Claude in Chrome was connected (`claude --chrome --resume`). On the test board, Everhour's only resident frame is the hidden root `https://app.everhour.com/trello-powerup/?v=2`. Opening a card adds `card-back-section.59ce56d2.html`.
+
+The browser tool's network log only shows top-frame requests, so it doesn't see Everhour's cross-origin iframe traffic. It did show Trello minting the Power-Up JWT: `POST /1/plugin/607eabc3361c748446d62490/jwt`. My first attempt to read the bundle inside the browser tripped the tool's privacy filter, and I didn't work around it. Instead, with the user's OK, I downloaded the four public bundles (build `59ce56d2`) with curl into the session scratchpad and read them there.
+
+**Found** (full write-up in `docs/everhour-api.md`):
+
+- Every call goes to `https://app.everhour.com/api` with header `x-jira-addon-token: <t.jwt()>`, no cookies. Board-wide lists use `t.jwt({state: JSON.stringify(boardIds)})` with `GET /trello/time` and no query; a single card uses `?cardId=`.
+- Add is `POST /trello/time` `{memberId, cardId, date, time, comment}`. Edit is `PUT /trello/time/{id}` with one field per call. **Delete is a PUT with `{time: 0}`**; there is no DELETE.
+- A record looks like `{id, cardId, boardId, memberId, date: 'YYYY-MM-DD', time: seconds, comment, createdAt, createdBy, isInvoiced, card: {time, timeByUser}}`.
+- After every write Everhour mirrors per-card totals into Trello pluginData (`t.set(cardId, 'shared', state)`) and broadcasts `{type: 'data-changed', cardId}` on `BroadcastChannel('eh-' + secret6)`. Writes from the panel have to do the same, or badges go stale.
+- The root frame loads `p.trellocdn.com/power-up.min.js` as a normal global script before Everhour calls `TrelloPowerUp.initialize`.
+- Client-side, editing is disabled on a free subscription and limited to your own records unless you're a board admin.
+
+**Decision: architecture change.** The plan was to capture auth headers from Everhour's own requests and replay them. Instead, the MAIN-world hook traps `window.TrelloPowerUp`, wraps `initialize`, and keeps the `t` that Trello hands to Everhour's `board-buttons` callback. With that one handle we can:
+
+- mint a fresh JWT per request, so no token is stored and expiry isn't a problem;
+- get card names with `t.cards()`, which also removes the planned trello.com content script;
+- open cards with `t.showCard()`;
+- keep pluginData in sync after writes.
+
+Change detection wraps `fetch` in every Everhour frame and watches POST/PUT on `/api/trello/time`. Updated `CLAUDE.md` to match.
+
+**Open (verify live):**
+
+- whether list responses include `card` and `createdAt`;
+- whether the server rejects edits on a free plan (the test board's subscription type is unknown);
+- whether `t` from `board-buttons` keeps working for the life of the page.
