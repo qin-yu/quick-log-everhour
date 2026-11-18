@@ -1,0 +1,9 @@
+{
+  "name": "trello-fast",
+  "private": true,
+  "type": "module",
+  "description": "Chrome side panel for logging and fixing Everhour time on Trello faster",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}

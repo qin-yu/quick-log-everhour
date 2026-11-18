@@ -17,3 +17,18 @@ Newest section at the bottom. Each section says what was done, why, what was fou
 ## 2026-11-18 — Repo scaffold
 
 Ran `git init` on `main` and added `.gitignore`, `CLAUDE.md` (purpose, boards, architecture, constraints, run/test, conventions) and this devlog.
+
+## 2026-11-18 — Time helpers (done before the API step)
+
+Claude in Chrome isn't connected to this session yet, so the Everhour API discovery (planned step 2) is blocked. I moved ahead with the pure helpers, which don't depend on the API.
+
+Added `src/lib/time.js` and `tests/time.test.js`, with 13 tests that pass under `node --test`.
+
+- Dates are `YYYY-MM-DD` strings and the arithmetic is done in UTC, so DST changes can't shift a day.
+- ISO week helpers: `weekStart`, `weekDays`, `isoWeek`, `weekLabel`. 2026 has 53 ISO weeks; this is tested.
+- `parseDuration` accepts `1.5`, `1,5`, `1:30`, `90m`, `2h`, `1h30`, `1h 30m`. A bare number means hours, the result is rounded to whole minutes, and zero or negative input is rejected.
+- `formatDuration` (`1h 30m`) is for entries and `formatHours` (`1.5`) is for table cells.
+- `sortRecent` sorts by id descending.
+- `weekMatrix` returns card × weekday seconds with row and day totals, rows sorted by total.
+
+Added a minimal `package.json` with `"type": "module"` and an `npm test` script. Chrome ignores it, and there are still no dependencies and no build step.
