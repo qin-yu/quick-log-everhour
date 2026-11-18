@@ -22,15 +22,15 @@ The side panel shows **my week** (cards × Mon–Sun, totals against a 35 h targ
 Time data lives in Everhour, not Trello, so the Trello API isn't needed. Everhour's Power-Up runs in `app.everhour.com` iframes inside trello.com. Its hidden root frame (`/trello-powerup/?v=2`) is always loaded on a board page. The extension's MAIN-world hook in that frame captures the Power-Up client handle `t` that Trello passes to Everhour, then uses it the way Everhour itself does: `t.jwt()` for the `x-jira-addon-token` header, `t.cards()` for card names, `t.set()` to keep card totals in sync, and `t.showCard()` to open a card. No API key is involved and no token is stored.
 
 ```
-side panel ──runtime msg──► background (service worker) ──tabs.sendMessage(frameId)──► everhour-bridge (root frame, isolated)
-     ▲                                                                                     │ DOM events
-     │                                                                                     ▼
-     │                                                         everhour-hook (root frame, MAIN): t.jwt() + fetch /api/trello/*
-     └──── "time-changed" ◄── bridge ◄── everhour-hook (MAIN, every Everhour frame): wraps fetch, sees POST/PUT /api/trello/time
+side panel ──chrome.tabs.sendMessage(tabId)──► everhour-bridge (every Everhour frame; only the root frame answers)
+     ▲                                               │ DOM CustomEvents (JSON strings)
+     │                                               ▼
+     │                         everhour-hook (root frame, MAIN): t.jwt() + fetch /api/trello/*
+     └── runtime "time-changed" ◄── bridge ◄── everhour-hook (MAIN, every Everhour frame): wraps fetch, sees POST/PUT /api/trello/time
 ```
 
 - `manifest.json` declares MV3, `sidePanel`, `storage` and two content scripts on `https://app.everhour.com/trello-powerup/*` with `all_frames` and `document_start`: the hook (MAIN world) and the bridge (isolated).
-- `src/background.js` opens the side panel from the action icon, remembers which frame in each tab is the Everhour root frame, and relays panel requests to it and change notices from any frame to the panel.
+- `src/background.js` only makes the action icon open the side panel. Nothing is relayed through the service worker: the panel messages the tab directly and the bridges message the panel directly.
 - `src/content/everhour-hook.js` runs in the MAIN world:
   - in every Everhour frame it wraps `fetch` and reports successful POST/PUT to `/api/trello/time`;
   - in the root frame it traps `window.TrelloPowerUp` to capture `t` and serves the bridge's requests.

@@ -62,3 +62,31 @@ Change detection wraps `fetch` in every Everhour frame and watches POST/PUT on `
 - whether list responses include `card` and `createdAt`;
 - whether the server rejects edits on a free plan (the test board's subscription type is unknown);
 - whether `t` from `board-buttons` keeps working for the life of the page.
+
+## 2026-11-18 — Read-only side panel with auto-refresh
+
+Plan steps 4 (read-only panel) and 5 (refresh on change) became one commit. The fetch hook that detects Everhour's writes is the same script that serves the panel's reads, so splitting them would have meant committing a half-wired hook.
+
+**Built:**
+
+- `manifest.json` with the side panel, `storage`, and two content scripts on Everhour's frames: `everhour-hook.js` (MAIN world) and `everhour-bridge.js` (isolated).
+- The hook captures `t` in the root frame and serves these ops: `context`, `cards`, `listTime`, `openCard` and `updateTime`. `updateTime` is wired but has no UI yet. In every frame it reports successful POST/PUT to `/api/trello/time`.
+- `src/lib/everhour.js`: `normaliseRecord`, `myRecords`, `editPatches` and `enteredAt`, with 5 tests. That makes 18 tests in total.
+- The side panel:
+  - week header with ‹ › and This week, plus ⟳;
+  - total against target with a meter;
+  - card × Mon–Sun table with today highlighted, where clicking a card opens it;
+  - latest entries by id descending, with "entered HH:MM" from `createdAt`;
+  - the week and target are saved in `chrome.storage.local`.
+- On `time-changed` from the tab, the panel reloads after 400 ms and flashes the new record. It also reloads when it becomes visible again and when the active tab changes.
+
+**Simplified compared with the plan:**
+
+- No background relay. `chrome.tabs.sendMessage(tabId)` reaches every frame's bridge and only the root-frame bridge registers a listener, so the service worker is reduced to `setPanelBehavior`. This also avoids MV3 worker restarts losing a frame map.
+- No 6-week window and no session-ID merge. `GET /trello/time` with the board as JWT state returns every record on the board, so "latest entered" is exact even for back-dated entries.
+- No trello.com content script for card names, because `t.cards()` covers it.
+- Debug aid: `src/sidepanel/index.html?tab=<id>` opened as a normal tab pins the panel to that Trello tab.
+
+**Verified:** the user loaded the unpacked extension and the panel shows the week and latest entries on the test board.
+
+**Feedback:** clicking a latest entry only opens its card on the page, which doesn't help fix a typo. Next step: edit and delete in place.

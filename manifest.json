@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "trello-fast",
+  "version": "0.1.0",
+  "description": "Everhour time on Trello in a side panel: my week at a glance and my latest entries, editable in place.",
+  "minimum_chrome_version": "116",
+  "permissions": ["sidePanel", "storage"],
+  "host_permissions": ["https://trello.com/*"],
+  "background": { "service_worker": "src/background.js", "type": "module" },
+  "action": { "default_title": "trello-fast: open my Everhour week" },
+  "side_panel": { "default_path": "src/sidepanel/index.html" },
+  "content_scripts": [
+    {
+      "matches": ["https://app.everhour.com/trello-powerup/*"],
+      "js": ["src/content/everhour-hook.js"],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://app.everhour.com/trello-powerup/*"],
+      "js": ["src/content/everhour-bridge.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>trello-fast</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <header class="bar">
+    <button id="prev" class="icon" title="Previous week" aria-label="Previous week">‹</button>
+    <div id="week-label" class="week-label">…</div>
+    <button id="next" class="icon" title="Next week" aria-label="Next week">›</button>
+    <button id="this-week" title="Go to this week">This week</button>
+    <button id="refresh" class="icon" title="Reload from Everhour" aria-label="Reload from Everhour">⟳</button>
+  </header>
+
+  <div id="status" class="status" role="status" hidden></div>
+
+  <main>
+    <section id="week" class="week" aria-label="My week"></section>
+
+    <section class="recent-section" aria-label="Latest entries">
+      <h2>Latest entries <span class="muted">newest first</span></h2>
+      <ol id="recent" class="recent"></ol>
+      <button id="more" class="link" hidden>Show more</button>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span id="who" class="muted"></span>
+    <label class="target">Target <input id="target" type="number" min="1" max="80" step="0.5" inputmode="decimal"> h/week</label>
+  </footer>
+
+  <script type="module" src="panel.js"></script>
+</body>
+</html>
