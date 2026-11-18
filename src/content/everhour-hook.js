@@ -77,7 +77,7 @@
 
   // ---------------------------------------------------------------- Everhour API, as Everhour calls it
   async function api(t, method, path, body, state) {
-    const jwt = await t.jwt(state ? { state: JSON.stringify(state) } : {});
+    const jwt = await (state ? t.jwt({ state: JSON.stringify(state) }) : t.jwt());
     const res = await origFetch(API + path, {
       method,
       headers: { 'Content-Type': 'application/json', 'x-jira-addon-token': jwt },

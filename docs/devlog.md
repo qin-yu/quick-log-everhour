@@ -90,3 +90,20 @@ Plan steps 4 (read-only panel) and 5 (refresh on change) became one commit. The 
 **Verified:** the user loaded the unpacked extension and the panel shows the week and latest entries on the test board.
 
 **Feedback:** clicking a latest entry only opens its card on the page, which doesn't help fix a typo. Next step: edit and delete in place.
+
+## 2026-11-18 — Edit and delete in the panel
+
+**Built** (`src/sidepanel/panel.js` and `panel.css`):
+
+- Clicking a latest entry (or its ✎) opens an inline editor with time, date and comment. Time accepts `1.5`, `1:30`, `90m` or `1h 30m`, up to 24 h. Enter saves, Esc cancels, and "Open card ↗" moved into the editor.
+- 🗑 opens an inline confirm. No `window.confirm`, because a modal dialog would block the panel.
+- Only the changed fields are sent, one PUT each via `editPatches`, with time last, then the panel reloads. The hook then mirrors `applyReportedTime`, so badges stay in step.
+- After every save or delete the status line offers **Undo**, which applies `editPatches(after, before)`. Because Everhour deletes by setting time to 0, the record survives and a delete can be undone with a PUT of the old time.
+- While an editor is open, background refreshes leave the list alone so typing isn't wiped. The week table still updates.
+- Status messages now come in three kinds: `info` is cleared by the next load, `error`, and `note` stays up to 20 s and can be dismissed.
+
+**Checked against Everhour's bundles:** for single-record GET and PUT, Everhour calls `t.jwt()` with no state, and every PUT returns the full record including `card` totals. The hook now calls `t.jwt()` the same way.
+
+**Testing limit:** the browser tool refuses `chrome-extension://` URLs, so the `?tab=` debug page can't be driven from here. Write-path verification on the test board is done by the user.
+
+The user asked to commit this step; no failures were reported. Point-by-point test results (Undo and badge sync) are still pending. Next: add new entries from the panel.

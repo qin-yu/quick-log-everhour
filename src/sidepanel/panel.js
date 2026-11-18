@@ -1,10 +1,11 @@
 import {
-  WEEKDAYS, addDays, formatDuration, formatHours, parseYMD, shortDate, sortRecent, todayYMD, weekDays, weekLabel,
-  weekMatrix, weekStart,
+  WEEKDAYS, addDays, formatDuration, formatHours, parseDuration, parseYMD, shortDate, sortRecent, todayYMD, weekDays,
+  weekLabel, weekMatrix, weekStart,
 } from '../lib/time.js';
-import { enteredAt, myRecords, normaliseRecord } from '../lib/everhour.js';
+import { editPatches, enteredAt, myRecords, normaliseRecord } from '../lib/everhour.js';
 
 const RECENT_PAGE = 15;
+const MAX_ENTRY = 24 * 3600;
 const $ = (id) => document.getElementById(id);
 
 const state = {
@@ -16,7 +17,9 @@ const state = {
   monday: weekStart(todayYMD()),
   target: 35,
   recentShown: RECENT_PAGE,
-  freshId: null, // id to flash in the recent list
+  freshId: null, // id to flash once in the recent list
+  editing: null, // {id, mode: 'edit' | 'delete'} while an editor is open
+  statusKind: null,
   loadSeq: 0,
 };
 
@@ -33,11 +36,20 @@ function h(tag, props = {}, ...children) {
   return el;
 }
 
-function setStatus(text, kind = 'info') {
+// kind: 'info' (cleared by the next successful load), 'error', or 'note' (stays until replaced, dismissed or timed out).
+let noteTimer = null;
+function setStatus(text, kind = 'info', action = null) {
   const el = $('status');
+  clearTimeout(noteTimer);
+  state.statusKind = text ? kind : null;
   el.hidden = !text;
-  el.textContent = text ?? '';
-  el.className = `status ${kind === 'error' ? 'error' : ''}`;
+  el.className = `status ${kind}`;
+  el.replaceChildren();
+  if (!text) return;
+  el.append(h('span', {}, text));
+  if (action) el.append(h('button', { class: 'link', onClick: action.run }, action.label));
+  if (kind !== 'info') el.append(h('button', { class: 'link dismiss', title: 'Dismiss', 'aria-label': 'Dismiss', onClick: () => setStatus('') }, '✕'));
+  if (kind === 'note') noteTimer = setTimeout(() => setStatus(''), 20000);
 }
 
 // ---------------------------------------------------------------- talking to the Everhour frame
@@ -70,6 +82,7 @@ async function bindActiveTab() {
   if (tabId !== state.tabId) {
     state.tabId = tabId;
     state.ctx = null;
+    state.editing = null;
   }
   if (tabId == null) {
     state.mine = [];
@@ -96,7 +109,7 @@ async function load({ quiet = false } = {}) {
     state.ctx = ctx;
     state.cards = new Map((cards ?? []).map((c) => [c.id, c]));
     state.mine = myRecords(records.map(normaliseRecord), ctx.member.id);
-    setStatus('');
+    if (state.statusKind !== 'note') setStatus('');
   } catch (err) {
     if (seq !== state.loadSeq) return;
     setStatus(String(err.message ?? err), 'error');
@@ -163,7 +176,9 @@ function renderWeek() {
       h('td', { class: 'sum' }, formatHours(m.total) || '0')))));
 }
 
-function renderRecent() {
+// While an editor is open the list is left alone, so a background refresh can't wipe what is being typed.
+function renderRecent({ force = false } = {}) {
+  if (state.editing && !force) return;
   const list = $('recent');
   list.replaceChildren();
   const recent = sortRecent(state.mine);
@@ -174,18 +189,132 @@ function renderRecent() {
     return;
   }
   for (const rec of recent.slice(0, state.recentShown)) list.append(recentItem(rec));
+  state.freshId = null; // flash once
 }
 
 function recentItem(rec) {
-  const li = h('li', { class: rec.id === state.freshId ? 'fresh' : null, 'data-id': rec.id });
+  const ed = state.editing?.id === rec.id ? state.editing : null;
   const entered = enteredAt(rec.createdAt);
+  const li = h('li', {
+    class: [rec.id === state.freshId ? 'fresh' : '', ed ? 'open' : ''].join(' ').trim() || null,
+    'data-id': rec.id,
+    title: ed ? null : 'Click to edit',
+    onClick: (e) => { if (!e.target.closest('button, input, form, .confirm')) openEditor(rec.id, 'edit'); },
+  });
   li.append(h('div', { class: 'row' },
     h('div', { class: 'what' },
-      h('span', { class: 'name' }, h('button', { title: 'Open card', onClick: () => openCard(rec.cardId) }, cardName(rec.cardId))),
+      h('span', { class: 'name' }, cardName(rec.cardId)),
       h('span', { class: 'meta' }, `${shortDate(rec.date)}${entered ? ` · entered ${entered}` : ''}`)),
-    h('span', { class: 'dur' }, formatDuration(rec.seconds))));
+    h('span', { class: 'dur' }, formatDuration(rec.seconds)),
+    h('span', { class: 'actions' },
+      h('button', { title: 'Edit', 'aria-label': 'Edit entry', onClick: () => openEditor(rec.id, 'edit') }, '✎'),
+      h('button', { class: 'danger', title: 'Delete', 'aria-label': 'Delete entry', onClick: () => openEditor(rec.id, 'delete') }, '🗑'))));
   if (rec.comment) li.append(h('div', { class: 'comment' }, rec.comment));
+  if (ed?.mode === 'edit') li.append(editForm(rec));
+  if (ed?.mode === 'delete') li.append(deleteConfirm(rec));
   return li;
+}
+
+// ---------------------------------------------------------------- edit and delete
+function openEditor(id, mode) {
+  state.editing = { id, mode };
+  renderRecent({ force: true });
+}
+
+function closeEditor() {
+  state.editing = null;
+  renderRecent({ force: true });
+}
+
+const onEscape = (e) => {
+  if (e.key === 'Escape') { e.preventDefault(); closeEditor(); }
+};
+
+function editForm(rec) {
+  const dur = h('input', { id: 'ed-dur', value: formatDuration(rec.seconds), autocomplete: 'off', placeholder: '1.5 · 1:30 · 90m' });
+  const date = h('input', { id: 'ed-date', type: 'date', value: rec.date, required: true });
+  const comment = h('input', { id: 'ed-comment', value: rec.comment, maxlength: 2000, autocomplete: 'off' });
+  const error = h('div', { class: 'error', hidden: true });
+  const form = h('form', { class: 'edit', onKeydown: onEscape },
+    h('label', { for: 'ed-dur' }, 'Time'), dur,
+    h('label', { for: 'ed-date' }, 'Date'), date,
+    h('label', { for: 'ed-comment' }, 'Comment'), comment,
+    error,
+    h('div', { class: 'buttons' },
+      h('button', { type: 'button', class: 'link', onClick: () => openCard(rec.cardId) }, 'Open card ↗'),
+      h('span', { class: 'spacer' }),
+      h('button', { type: 'button', onClick: closeEditor }, 'Cancel'),
+      h('button', { type: 'submit', class: 'primary' }, 'Save')));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const seconds = parseDuration(dur.value);
+    if (seconds == null) return showError(form, 'Time not understood. Try 1.5, 1:30, 90m or 1h 30m.');
+    if (seconds > MAX_ENTRY) return showError(form, 'At most 24 h in one entry.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date.value)) return showError(form, 'Pick a date.');
+    const text = comment.value.trim();
+    const patches = editPatches(rec, { seconds, date: date.value, comment: text === rec.comment.trim() ? undefined : text });
+    if (!patches.length) return closeEditor();
+    write(rec, patches, form, 'Saved');
+  });
+  requestAnimationFrame(() => { dur.focus(); dur.select(); });
+  return form;
+}
+
+function deleteConfirm(rec) {
+  const yes = h('button', { class: 'danger', onClick: () => write(rec, [{ time: 0 }], box, 'Deleted') }, 'Delete');
+  const box = h('div', { class: 'confirm', onKeydown: onEscape },
+    h('span', {}, `Delete ${formatDuration(rec.seconds)} on ${shortDate(rec.date)}?`),
+    h('button', { onClick: closeEditor }, 'Cancel'),
+    yes,
+    h('div', { class: 'error', hidden: true }));
+  requestAnimationFrame(() => yes.focus());
+  return box;
+}
+
+function showError(box, message) {
+  const el = box.querySelector('.error');
+  el.textContent = message;
+  el.hidden = false;
+}
+
+const applyPatches = (rec, patches) => patches.reduce((r, p) => ({
+  ...r,
+  ...('date' in p && { date: p.date }),
+  ...('comment' in p && { comment: p.comment }),
+  ...('time' in p && { seconds: p.time }),
+}), rec);
+
+// Send the PUTs, refresh, and offer an undo that puts the old values back (a delete is time 0, so the record survives).
+async function write(rec, patches, box, verb) {
+  const controls = [...box.querySelectorAll('input, button')];
+  controls.forEach((el) => { el.disabled = true; });
+  box.querySelector('.error').hidden = true;
+  try {
+    await op('updateTime', { id: rec.id, patches });
+  } catch (err) {
+    controls.forEach((el) => { el.disabled = false; });
+    showError(box, String(err.message ?? err));
+    return;
+  }
+  const after = applyPatches(rec, patches);
+  const undo = editPatches(after, rec);
+  state.editing = null;
+  state.freshId = rec.id;
+  setStatus(`${verb}: ${cardName(rec.cardId)}, ${formatDuration(after.seconds || rec.seconds)} on ${shortDate(after.date)}.`, 'note',
+    undo.length ? { label: 'Undo', run: () => undoWrite(rec, undo) } : null);
+  await load({ quiet: true });
+}
+
+async function undoWrite(rec, patches) {
+  setStatus('Undoing…');
+  try {
+    await op('updateTime', { id: rec.id, patches });
+    state.freshId = rec.id;
+    setStatus('Undone.', 'note');
+  } catch (err) {
+    setStatus(`Undo failed: ${err.message ?? err}`, 'error');
+  }
+  await load({ quiet: true });
 }
 
 // ---------------------------------------------------------------- wiring
@@ -202,7 +331,7 @@ $('prev').addEventListener('click', () => goWeek(addDays(state.monday, -7)));
 $('next').addEventListener('click', () => goWeek(addDays(state.monday, 7)));
 $('this-week').addEventListener('click', () => goWeek(weekStart(todayYMD())));
 $('refresh').addEventListener('click', () => load());
-$('more').addEventListener('click', () => { state.recentShown += RECENT_PAGE; renderRecent(); });
+$('more').addEventListener('click', () => { state.recentShown += RECENT_PAGE; renderRecent({ force: true }); });
 $('target').addEventListener('change', () => {
   const v = Number($('target').value);
   if (v > 0 && v <= 80) { state.target = v; saveSettings(); }
