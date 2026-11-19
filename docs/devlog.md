@@ -221,3 +221,19 @@ The user asked for ⇧⌘Z redo. Single-level undo plus redo would have surprise
 ## 2026-11-19 — Real board, quick look
 
 The user opened the panel on the real board and gave it a quick look. Nothing looked wrong, but they did not compare it cell by cell with Everhour's Time report. If numbers ever look off on the real board, that comparison is the first thing to do.
+
+## 2026-11-19 — Renamed to quick-log-everhour, history cleaned before going public
+
+The repo is going public on GitHub, so that the privacy policy has a public address. The user picked the name quick-log-everhour. The page-script event names keep the old `trello-fast:` prefix, because users never see them.
+
+- The panel's stale-tab message used to say "click ↻ on trello-fast in chrome://extensions". The extension isn't called that any more, and store installs have no ↻ button, so it now just says to reload the Trello tab.
+- The history was rewritten once, before the first push, with `git filter-branch`:
+  - Every commit got the trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. CLAUDE.md now asks for it on every new commit.
+  - Author and committer dates are exactly as before. The user commits with `gitpast`, which sets both. Names and emails are also unchanged. All 20 commits were compared one by one.
+  - The two board links are gone from CLAUDE.md in every commit. They now live in `CLAUDE.local.md`, which is gitignored.
+  - The first mock data and one unit test used real card names from the team board. Every commit now has made-up names instead.
+  - `icons/__pycache__/` is gone from every commit and is gitignored.
+- Checked after the rewrite: the tests pass at every commit, and no commit contains a board ID, a real card name or a `.pyc` file.
+- A bundle of the history from before the rewrite is in the session scratchpad. That folder is temporary, so the bundle isn't a lasting backup.
+
+Still open: choose where the repo lives (the user's own account or the Crick org), create it, push, and put PRIVACY.md's public URL into `docs/store-listing.md`.
