@@ -203,3 +203,16 @@ The user chose route 2: publish to the Chrome Web Store as **Unlisted** for the 
 - `main` got bottom padding so the toast can't hide the last entry.
 
 Checked in the harness: the toast stays in view after scrolling down and editing, ⌘Z restores the old time, ⌘Z in a field with text is left alone, and ⌘Z after Log removes the logged entry.
+
+## 2026-11-19 — Redo, and undo as a real history
+
+The user asked for ⇧⌘Z redo. Single-level undo plus redo would have surprised anyone who presses ⌘Z twice, so undo became a proper history.
+
+- New `src/lib/history.js`, with 4 tests (23 in total).
+  - A step is `{id, before, after}` snapshots of one record's date, comment and seconds. A log goes from 0 s and a delete goes to 0 s, so every step replays in either direction as plain PUTs; Everhour keeps time-0 records.
+  - `History.move(direction, apply)` pops a step, applies it and pushes it onto the other stack. A new change clears redo, and the stack keeps the last 50 steps.
+  - If applying fails, the step stays put so it can be retried, unless the error is marked `permanent`.
+- **Optimistic concurrency check.** Every undo or redo sends `expect` (the record's state before the replay). The hook's `updateTime` refuses with "changed somewhere else" if the record no longer matches, so an undo can never overwrite an edit made in Everhour's own dialogs in the meantime. That refusal marks the step permanent and drops it. The mock implements the same check.
+- Keys: ⌘Z / Ctrl+Z undoes; ⇧⌘Z / Ctrl+Shift+Z / Ctrl+Y redoes. As before, they're ignored in a field with text. The toast shows Undo and/or Redo while there is something to do, and the shortcuts keep working after it hides. The history is cleared when the panel switches tab or board.
+- Verified in the harness with real key presses: log, edit and delete, then three undos (board total 17 → 17.5 → 20 → 19), "Nothing to undo", two redos (→ 20 → 17.5), a new edit clearing redo, and an undo refused after the record changed behind the panel.
+- The hook changed, so the user needs ↻ in `chrome://extensions` plus a Trello tab reload. An old hook ignores `expect`, so undo still works with it, just without the check.

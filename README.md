@@ -11,7 +11,7 @@ Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 - **Your week.** A grid of cards × Mon–Sun, with day and card totals measured against a weekly target. The target defaults to 35 h and you can change it at the bottom of the panel. Today is highlighted. ‹ and › move between weeks, and the panel remembers which week you were on.
 - **Always current.** When you add or change time in Everhour's own dialogs, the panel refreshes by itself.
 - **Log time.** Pick a card (recently used cards come first), a date, a duration and an optional comment, then press Enter. Durations can be written as `1.5`, `1:30`, `90m` or `1h 30m`. Clicking a cell in the week grid fills in that card and day for you.
-- **Latest entries.** Your entries on this board, newest first, so a typo you just made is at the top. Click an entry to change its time, date or comment. 🗑 deletes it after a confirm. After every log, save or delete, a bar at the bottom of the panel offers **Undo** for 30 seconds. ⌘Z (Ctrl+Z on Windows) does the same when you aren't typing in a field.
+- **Latest entries.** Your entries on this board, newest first, so a typo you just made is at the top. Click an entry to change its time, date or comment. 🗑 deletes it after a confirm. After every log, save or delete, a bar at the bottom of the panel offers **Undo**, then **Redo**. ⌘Z and ⇧⌘Z (Ctrl+Z and Ctrl+Y on Windows) step back and forward through everything you did in the panel, as long as you aren't typing in a field. If an entry was changed in Everhour's own dialogs in the meantime, undo leaves it alone and says so.
 
 ![Editing an entry](store/screenshot-2.png)
 

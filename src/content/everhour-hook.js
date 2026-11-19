@@ -158,7 +158,9 @@
       return rec;
     },
     // patches: [{date}|{comment}|{time}], applied in order, one PUT each (like Everhour). [{time: 0}] deletes.
-    async updateTime({ id, patches }) {
+    // expect: optional {date, comment, time} the record must still have (undo/redo), so a change made
+    // elsewhere in the meantime is never overwritten.
+    async updateTime({ id, patches, expect = null }) {
       if (!Number.isInteger(id) || !Array.isArray(patches) || !patches.length) throw new Error('Bad update request');
       for (const p of patches) {
         const keys = Object.keys(p ?? {});
@@ -168,6 +170,11 @@
       const { board, member } = t.getContext();
       const current = await api(t, 'GET', `/trello/time/${id}`);
       if (current?.memberId !== member || current?.boardId !== board) throw new Error('That record is not yours on this board');
+      if (expect && !(
+        (expect.date === undefined || String(current.date ?? '').slice(0, 10) === expect.date)
+        && (expect.comment === undefined || (current.comment ?? '') === expect.comment)
+        && (expect.time === undefined || Math.round(Number(current.time) || 0) === expect.time)
+      )) throw new Error('This entry was changed somewhere else since, so it was left as it is.');
       let rec = current;
       for (const p of patches) rec = await api(t, 'PUT', `/trello/time/${id}`, p);
       await applyReportedTime(t, rec);

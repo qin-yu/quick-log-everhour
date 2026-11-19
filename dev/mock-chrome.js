@@ -37,9 +37,12 @@
     listTime: () => records,
     openCard: () => true,
     addTime: ({ cardId, date, time, comment }) => { const r = rec(cardId, date, time / 3600, comment, new Date()); records.push(r); return r; },
-    updateTime: ({ id, patches }) => {
+    updateTime: ({ id, patches, expect }) => {
       const r = records.find((x) => x.id === id);
       if (!r) throw new Error('not found');
+      if (expect && (expect.date !== r.date || expect.comment !== r.comment || expect.time !== r.time)) {
+        throw new Error('This entry was changed somewhere else since, so it was left as it is.');
+      }
       for (const p of patches) Object.assign(r, p);
       return r;
     },

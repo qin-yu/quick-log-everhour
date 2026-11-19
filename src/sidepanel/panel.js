@@ -3,11 +3,15 @@ import {
   weekLabel, weekMatrix, weekStart,
 } from '../lib/time.js';
 import { cardChoices, editPatches, enteredAt, myRecords, normaliseRecord } from '../lib/everhour.js';
+import { History, makeStep } from '../lib/history.js';
 
 const RECENT_PAGE = 15;
 const MAX_ENTRY = 24 * 3600;
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const $ = (id) => document.getElementById(id);
+const history = new History(); // this board's writes from this panel, for Undo / Redo
+const IS_MAC = /Mac/.test(navigator.platform);
+const KEYS = IS_MAC ? { undo: '⌘Z', redo: '⇧⌘Z' } : { undo: 'Ctrl+Z', redo: 'Ctrl+Y' };
 
 const state = {
   windowId: null,
@@ -20,7 +24,6 @@ const state = {
   recentShown: RECENT_PAGE,
   freshId: null, // id to flash once in the recent list
   editing: null, // {id, mode: 'edit' | 'delete'} while an editor is open
-  undo: null, // what ⌘Z / the toast's Undo button does right now
   loadSeq: 0,
 };
 
@@ -49,20 +52,52 @@ function setStatus(text, kind = 'info') {
 }
 
 // Floating bar at the bottom for the outcome of a write, so it is in view wherever the panel is scrolled.
-// With `undo`, it offers an Undo button (and ⌘Z / Ctrl+Z) until it times out or is replaced.
+// It offers Undo / Redo whenever the history has something; the keyboard shortcuts work even after it hides.
 let toastTimer = null;
-function toast(text, { kind = 'note', undo = null, sticky = false } = {}) {
+function toast(text, { kind = 'note', sticky = false } = {}) {
   const el = $('toast');
   clearTimeout(toastTimer);
-  state.undo = undo;
   el.hidden = !text;
   el.className = `toast ${kind}`;
   el.replaceChildren();
   if (!text) return;
   el.append(h('span', {}, text));
-  if (undo) el.append(h('button', { class: 'link', title: 'Undo (⌘Z / Ctrl+Z)', onClick: undo }, 'Undo'));
+  const busy = sticky && kind !== 'error';
+  if (!busy && history.undo.length) el.append(h('button', { class: 'link', title: `Undo (${KEYS.undo})`, onClick: () => travel('undo') }, 'Undo'));
+  if (!busy && history.redo.length) el.append(h('button', { class: 'link', title: `Redo (${KEYS.redo})`, onClick: () => travel('redo') }, 'Redo'));
   el.append(h('button', { class: 'link dismiss', title: 'Dismiss', 'aria-label': 'Dismiss', onClick: () => toast('') }, '✕'));
-  if (!sticky) toastTimer = setTimeout(() => toast(''), undo ? 30000 : 6000);
+  if (!sticky) toastTimer = setTimeout(() => toast(''), history.undo.length || history.redo.length ? 30000 : 6000);
+}
+
+// Undo or redo the latest step. A "changed somewhere else" refusal from the hook can never succeed, so that
+// step is dropped; any other failure keeps it for another try.
+let travelling = false;
+async function travel(direction) {
+  if (travelling) return;
+  const undoing = direction === 'undo';
+  if (!(undoing ? history.undo : history.redo).length) {
+    toast(undoing ? 'Nothing to undo.' : 'Nothing to redo.');
+    return;
+  }
+  travelling = true;
+  toast(undoing ? 'Undoing…' : 'Redoing…', { sticky: true });
+  try {
+    const step = await history.move(direction, async (request) => {
+      try {
+        await op('updateTime', request);
+      } catch (err) {
+        if (/changed somewhere else/.test(err?.message ?? '')) err.permanent = true;
+        throw err;
+      }
+    });
+    state.freshId = step.id;
+    toast(`${undoing ? 'Undid' : 'Redid'} ${step.noun}: ${step.what}.`);
+  } catch (err) {
+    toast(`${undoing ? 'Undo' : 'Redo'} failed: ${err.message ?? err}`, { kind: 'error', sticky: true });
+  } finally {
+    travelling = false;
+  }
+  await load({ quiet: true });
 }
 
 // ---------------------------------------------------------------- talking to the Everhour frame
@@ -95,6 +130,7 @@ async function bindActiveTab() {
     state.tabId = tabId;
     state.ctx = null;
     state.editing = null;
+    history.clear();
   }
   if (tabId == null) {
     state.mine = [];
@@ -118,6 +154,7 @@ async function load({ quiet = false } = {}) {
       op('listTime'),
     ]);
     if (seq !== state.loadSeq) return; // a newer load started
+    if (state.ctx?.boardId && ctx.boardId !== state.ctx.boardId) history.clear(); // same tab, another board
     state.ctx = ctx;
     state.cards = new Map((cards ?? []).map((c) => [c.id, c]));
     state.mine = myRecords(records.map(normaliseRecord), ctx.member.id);
@@ -224,8 +261,9 @@ add.form.addEventListener('submit', async (e) => {
   const id = Number(rec?.id) || null;
   state.freshId = id;
   if (weekStart(date) !== state.monday) { state.monday = weekStart(date); saveSettings(); }
-  toast(`Logged ${formatDuration(seconds)} on ${cardName(cardId)}, ${shortDate(date)}.`,
-    { undo: id ? () => undoWrite({ id }, [{ time: 0 }]) : null });
+  const logged = { date, comment, seconds };
+  if (id) history.push(makeStep(id, { ...logged, seconds: 0 }, logged, { noun: 'log', what: `${cardName(cardId)}, ${shortDate(date)}` }));
+  toast(`Logged ${formatDuration(seconds)} on ${cardName(cardId)}, ${shortDate(date)}.`);
   await load({ quiet: true });
 });
 
@@ -379,7 +417,7 @@ const applyPatches = (rec, patches) => patches.reduce((r, p) => ({
   ...('time' in p && { seconds: p.time }),
 }), rec);
 
-// Send the PUTs, refresh, and offer an undo that puts the old values back (a delete is time 0, so the record survives).
+// Send the PUTs, record the step for Undo / Redo, and refresh. A delete is time 0, so the record survives.
 async function write(rec, patches, box, verb) {
   const controls = [...box.querySelectorAll('input, button')];
   controls.forEach((el) => { el.disabled = true; });
@@ -392,23 +430,10 @@ async function write(rec, patches, box, verb) {
     return;
   }
   const after = applyPatches(rec, patches);
-  const undo = editPatches(after, rec);
   state.editing = null;
   state.freshId = rec.id;
-  toast(`${verb}: ${cardName(rec.cardId)}, ${formatDuration(after.seconds || rec.seconds)} on ${shortDate(after.date)}.`,
-    { undo: undo.length ? () => undoWrite(rec, undo) : null });
-  await load({ quiet: true });
-}
-
-async function undoWrite(rec, patches) {
-  toast('Undoing…', { sticky: true });
-  try {
-    await op('updateTime', { id: rec.id, patches });
-    state.freshId = rec.id;
-    toast('Undone.');
-  } catch (err) {
-    toast(`Undo failed: ${err.message ?? err}`, { kind: 'error', sticky: true });
-  }
+  history.push(makeStep(rec.id, rec, after, { noun: verb === 'Deleted' ? 'delete' : 'edit', what: `${cardName(rec.cardId)}, ${shortDate(after.date)}` }));
+  toast(`${verb}: ${cardName(rec.cardId)}, ${formatDuration(after.seconds || rec.seconds)} on ${shortDate(after.date)}.`);
   await load({ quiet: true });
 }
 
@@ -449,13 +474,17 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (tab.windowId !== state.windowId || !tab.active) return;
   if (info.url && !isTrelloBoardUrl(info.url)) load();
 });
+// ⌘Z / Ctrl+Z undo; ⇧⌘Z / Ctrl+Shift+Z / Ctrl+Y redo.
 document.addEventListener('keydown', (e) => {
-  const undoKey = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z';
-  if (!undoKey || !state.undo) return;
+  const key = e.key.toLowerCase();
+  let direction = null;
+  if ((e.metaKey || e.ctrlKey) && !e.altKey && key === 'z') direction = e.shiftKey ? 'redo' : 'undo';
+  else if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && key === 'y') direction = 'redo';
+  if (!direction) return;
   const field = e.target.closest?.('input, textarea, select');
   if (field && field.value !== '') return; // a field with text keeps its own undo; an empty one (e.g. time after Log) doesn't need it
   e.preventDefault();
-  state.undo();
+  travel(direction);
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') scheduleReload(0); });
 

@@ -26,7 +26,7 @@ LOG TIME FAST
 FIX MISTAKES IN SECONDS
 • Your latest entries come first. No member filter, no date range.
 • Click an entry to change its time, date or comment, or delete it.
-• Every log, save and delete can be undone, with one click or ⌘Z / Ctrl+Z.
+• Undo and redo every log, save and delete, with one click or ⌘Z / ⇧⌘Z (Ctrl+Z / Ctrl+Y).
 
 HOW IT WORKS
 The extension uses the connection Trello already gives the Everhour Power-Up, and sends the same requests Everhour's own dialogs send. There is no API key, no extra sign-in and no server of its own.
