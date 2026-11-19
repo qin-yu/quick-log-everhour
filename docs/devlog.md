@@ -216,3 +216,4 @@ The user asked for ⇧⌘Z redo. Single-level undo plus redo would have surprise
 - Keys: ⌘Z / Ctrl+Z undoes; ⇧⌘Z / Ctrl+Shift+Z / Ctrl+Y redoes. As before, they're ignored in a field with text. The toast shows Undo and/or Redo while there is something to do, and the shortcuts keep working after it hides. The history is cleared when the panel switches tab or board.
 - Verified in the harness with real key presses: log, edit and delete, then three undos (board total 17 → 17.5 → 20 → 19), "Nothing to undo", two redos (→ 20 → 17.5), a new edit clearing redo, and an undo refused after the record changed behind the panel.
 - The hook changed, so the user needs ↻ in `chrome://extensions` plus a Trello tab reload. An old hook ignores `expect`, so undo still works with it, just without the check.
+- The user reloaded the extension and checked undo and redo on the test board against the real Everhour: it works.
