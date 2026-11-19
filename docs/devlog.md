@@ -217,3 +217,7 @@ The user asked for ⇧⌘Z redo. Single-level undo plus redo would have surprise
 - Verified in the harness with real key presses: log, edit and delete, then three undos (board total 17 → 17.5 → 20 → 19), "Nothing to undo", two redos (→ 20 → 17.5), a new edit clearing redo, and an undo refused after the record changed behind the panel.
 - The hook changed, so the user needs ↻ in `chrome://extensions` plus a Trello tab reload. An old hook ignores `expect`, so undo still works with it, just without the check.
 - The user reloaded the extension and checked undo and redo on the test board against the real Everhour: it works.
+
+## 2026-11-19 — Real board, quick look
+
+The user opened the panel on the real board and gave it a quick look. Nothing looked wrong, but they did not compare it cell by cell with Everhour's Time report. If numbers ever look off on the real board, that comparison is the first thing to do.
