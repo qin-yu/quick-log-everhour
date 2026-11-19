@@ -1,5 +1,5 @@
 {
-  "name": "trello-fast",
+  "name": "quick-log-everhour",
   "private": true,
   "type": "module",
   "description": "Chrome side panel for logging and fixing Everhour time on Trello faster",

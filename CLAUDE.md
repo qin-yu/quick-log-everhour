@@ -1,6 +1,6 @@
-# trello-fast
+# quick-log-everhour
 
-Published as **Quick Time Log & Edit for Everhour on Trello**; the repo and code keep the name trello-fast. A Chrome extension (Manifest V3) that adds a side panel to Trello for faster time logging with the **Everhour Trello Power-Up**, which is what the team board uses for time tracking.
+Published as **Quick Time Log & Edit for Everhour on Trello**; the repo is quick-log-everhour. The project started as trello-fast, and the page-script events (`trello-fast:req`, `trello-fast:res`, `trello-fast:changed`) still carry that name. A Chrome extension (Manifest V3) that adds a side panel to Trello for faster time logging with the **Everhour Trello Power-Up**, which is what the team board uses for time tracking.
 
 ## Why it exists
 
@@ -70,6 +70,6 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 
 ## Conventions
 
-- Conventional Commits, one commit per semantically separate step, with no AI attribution trailers.
+- Conventional Commits, one commit per semantically separate step. Every commit ends with a `Co-Authored-By: Claude <model> <noreply@anthropic.com>` trailer naming the model that did the work, e.g. `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. When rewriting history, keep each commit's author and committer dates exactly as they are (the user commits with `gitpast`, which sets both).
 - After each step, append a section to [docs/devlog.md](docs/devlog.md) covering what was done, why, what was found and what is still open. Keep this file up to date when the architecture changes.
 - Markdown: one line per paragraph, never hard-wrapped.

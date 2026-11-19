@@ -4,3 +4,5 @@ node_modules/
 *.crx
 *.pem
 dist/
+__pycache__/
+CLAUDE.local.md
