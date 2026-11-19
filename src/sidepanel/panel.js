@@ -1,5 +1,5 @@
 import {
-  WEEKDAYS, addDays, formatDuration, formatHours, parseDuration, parseYMD, shortDate, sortRecent, todayYMD, weekDays,
+  WEEKDAYS, addDays, formatDuration, formatHours, parseDuration, parseYMD, shortDate, sortRecent, todayYMD,
   weekLabel, weekMatrix, weekStart,
 } from '../lib/time.js';
 import { cardChoices, editPatches, enteredAt, myRecords, normaliseRecord } from '../lib/everhour.js';
@@ -76,13 +76,8 @@ async function op(name, args = {}) {
 
 const isTrelloBoardUrl = (url) => /^https:\/\/trello\.com\/[bc]\//.test(url ?? '');
 
-// Debug: open this page in a normal tab as index.html?tab=<trello tab id> to pin it to that tab.
-const PINNED_TAB = Number(new URLSearchParams(location.search).get('tab')) || null;
-
 async function bindActiveTab() {
-  const tab = PINNED_TAB
-    ? await chrome.tabs.get(PINNED_TAB).catch(() => null)
-    : (await chrome.tabs.query({ active: true, windowId: state.windowId }))[0];
+  const [tab] = await chrome.tabs.query({ active: true, windowId: state.windowId });
   const tabId = tab && isTrelloBoardUrl(tab.url) ? tab.id : null;
   if (tabId !== state.tabId) {
     state.tabId = tabId;
@@ -436,9 +431,9 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     scheduleReload(600);
   }
 });
-chrome.tabs.onActivated.addListener(({ windowId }) => { if (!PINNED_TAB && windowId === state.windowId) load(); });
+chrome.tabs.onActivated.addListener(({ windowId }) => { if (windowId === state.windowId) load(); });
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
-  if (PINNED_TAB || tab.windowId !== state.windowId || !tab.active) return;
+  if (tab.windowId !== state.windowId || !tab.active) return;
   if (info.url && !isTrelloBoardUrl(info.url)) load();
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') scheduleReload(0); });
@@ -452,6 +447,3 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
   render();
   await load();
 })();
-
-// Exposed for debugging from DevTools.
-globalThis.trelloFast = { state, load, weekDays };

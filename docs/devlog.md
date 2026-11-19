@@ -148,3 +148,9 @@ User request: add new entries straight from the panel.
 The user's first try at logging returned `Unknown request addTime`. The panel page is read fresh from disk, but the hook and bridge in the Trello page are the copies Chrome injected when the tab loaded. A newer panel was talking to an older hook. Fix for the user: ↻ on trello-fast in `chrome://extensions`, then reload the Trello tab. Re-injecting from the service worker wouldn't help: the hook has to trap `TrelloPowerUp` at `document_start`, before Everhour initialises, so only a tab reload gets a working hook.
 
 The panel now turns any `Unknown request …` from the hook into that instruction, so future version mismatches explain themselves.
+
+## 2026-11-19 — Chrome Web Store release prep
+
+The user chose route 2: publish to the Chrome Web Store as **Unlisted** for the team. Replacing Everhour with our own Power-Up was discussed and parked. It would need a backend, because pluginData caps at 4096 characters per card, and the whole team would have to switch.
+
+**Step 1 — remove debug hooks.** Removed the `?tab=` pin and `globalThis.trelloFast` from the panel. The browser tool can't open `chrome-extension://` pages, so the pin never helped. UI work goes through `dev/serve.py` instead.
