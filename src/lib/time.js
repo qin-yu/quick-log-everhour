@@ -41,8 +41,11 @@ export function isoWeek(ymd) {
   return { year, week };
 }
 
-/** '16–22 Nov 2026 · W47', or '30 Nov – 6 Dec 2026 · W49' across months. */
-export function weekLabel(monday) {
+/**
+ * '16–22 Nov 2026 · W47', or '30 Nov – 6 Dec 2026 · W49' across months.
+ * With `currentYear`, a week that lies wholly in that year drops it: '16–22 Nov · W47'.
+ */
+export function weekLabel(monday, currentYear = null) {
   const a = parseYMD(monday);
   const b = parseYMD(addDays(monday, 6));
   const { week } = isoWeek(monday);
@@ -52,7 +55,8 @@ export function weekLabel(monday) {
     ? `${a.getUTCDate()}`
     : `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()]}${sameYear ? '' : ` ${a.getUTCFullYear()}`}`;
   const sep = sameMonth ? '–' : ' – ';
-  return `${left}${sep}${b.getUTCDate()} ${MONTHS[b.getUTCMonth()]} ${b.getUTCFullYear()} · W${week}`;
+  const year = sameYear && b.getUTCFullYear() === currentYear ? '' : ` ${b.getUTCFullYear()}`;
+  return `${left}${sep}${b.getUTCDate()} ${MONTHS[b.getUTCMonth()]}${year} · W${week}`;
 }
 
 /** 'Tue 17 Nov' */

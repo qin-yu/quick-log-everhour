@@ -43,6 +43,10 @@ test('weekLabel formats within and across months and years', () => {
   assert.equal(weekLabel('2026-11-16'), '16–22 Nov 2026 · W47');
   assert.equal(weekLabel('2026-11-30'), '30 Nov – 6 Dec 2026 · W49');
   assert.equal(weekLabel('2026-12-28'), '28 Dec 2026 – 3 Jan 2027 · W53');
+  assert.equal(weekLabel('2026-11-16', 2026), '16–22 Nov · W47');
+  assert.equal(weekLabel('2026-11-30', 2026), '30 Nov – 6 Dec · W49');
+  assert.equal(weekLabel('2026-11-16', 2027), '16–22 Nov 2026 · W47');
+  assert.equal(weekLabel('2026-12-28', 2026), '28 Dec 2026 – 3 Jan 2027 · W53');
 });
 
 test('shortDate', () => {

@@ -134,7 +134,8 @@ const cardName = (cardId) => {
 const openCard = (cardId) => op('openCard', { cardId }).catch((err) => setStatus(String(err.message ?? err), 'error'));
 
 function render() {
-  $('week-label').textContent = weekLabel(state.monday);
+  $('week-label').textContent = weekLabel(state.monday, Number(todayYMD().slice(0, 4)));
+  $('week-label').title = weekLabel(state.monday);
   $('target').value = String(state.target);
   $('who').textContent = state.ctx ? `${state.ctx.member.fullName} · ${state.ctx.board.name}` : '';
   renderAdd();
