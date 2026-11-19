@@ -1,6 +1,6 @@
 # trello-fast
 
-A Chrome extension (Manifest V3) that adds a side panel to Trello for faster time logging with the **Everhour Trello Power-Up**, which is what the team board uses for time tracking.
+Published as **Quick Time Log & Edit for Everhour on Trello**; the repo and code keep the name trello-fast. A Chrome extension (Manifest V3) that adds a side panel to Trello for faster time logging with the **Everhour Trello Power-Up**, which is what the team board uses for time tracking.
 
 ## Why it exists
 
@@ -38,6 +38,7 @@ side panel ──chrome.tabs.sendMessage(tabId)──► everhour-bridge (every 
 - `src/lib/everhour.js` normalises records to `{id, date, seconds, comment, memberId, cardId, createdAt}`, turns an edit into per-field PUTs (`editPatches`) and orders the card picker (`cardChoices`).
 - `src/lib/time.js` holds pure helpers: ISO weeks (Mon–Sun), duration parsing (`1.5`, `1:30`, `90m`) and the card × weekday matrix.
 - `src/sidepanel/` holds the panel UI.
+- `icons/` holds the PNGs the manifest uses, rendered with `rsvg-convert` from `icon.svg` (48 and 128 px, with Chrome's 16 px margin) and `icon-small.svg` (16 and 32 px, full bleed).
 
 Everhour record IDs increase monotonically, so "most recently entered" means sorting by `id` descending. Records also carry `createdAt`. Delete is `PUT /trello/time/{id}` with `{time: 0}`, because Everhour has no DELETE.
 

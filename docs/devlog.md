@@ -154,3 +154,9 @@ The panel now turns any `Unknown request …` from the hook into that instructio
 The user chose route 2: publish to the Chrome Web Store as **Unlisted** for the team. Replacing Everhour with our own Power-Up was discussed and parked. It would need a backend, because pluginData caps at 4096 characters per card, and the whole team would have to switch.
 
 **Step 1 — remove debug hooks.** Removed the `?tab=` pin and `globalThis.trelloFast` from the panel. The browser tool can't open `chrome-extension://` pages, so the pin never helped. UI work goes through `dev/serve.py` instead.
+
+**Step 2 — name and icons.**
+
+- The store name is **Quick Time Log & Edit for Everhour on Trello**, 44 of 75 characters, chosen by the user. Brands come last in the "… for X" form, so it doesn't read as an official Trello or Everhour product. `short_name` is "Quick Time Log", and the toolbar tooltip is "Quick Time Log & Edit".
+- The manifest description doubles as the store summary, 113 of 132 characters.
+- The icon is a white clock with speed lines on an indigo tile, kept away from Trello blue. It's drawn in `icons/icon.svg` with Chrome's 16 px transparent margin. The toolbar sizes come from a full-bleed, clock-only `icons/icon-small.svg` so they stay legible at 16 px. Rendered with `rsvg-convert`.
