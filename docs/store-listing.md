@@ -53,7 +53,7 @@ Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 | Screenshots (1280×800) | `store/screenshot-1.png`, `store/screenshot-2.png` |
 | Small promo tile (440×280) | `store/promo-small-440x280.png` |
 
-The screenshots use made-up data from `dev/mock-chrome.js`. Never use screenshots of the real board, because an unlisted listing is still public to anyone with the link. Regenerate them with `sh dev/store-assets.sh`.
+The screenshots use made-up data from `dev/mock-chrome.js`. Never use screenshots of the real board, because the listing is public. Regenerate them with `sh dev/store-assets.sh`.
 
 ## Privacy tab
 
@@ -96,7 +96,7 @@ On a page that is not a Trello board, the panel asks you to open a board that us
 
 ## Distribution tab
 
-- **Visibility:** Unlisted. Only people with the link can find and install it.
+- **Visibility:** Public. The first plan was Unlisted, but the user chose Public at submission.
 - **Regions:** all.
 - **Price:** free.
 

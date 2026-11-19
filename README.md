@@ -17,7 +17,7 @@ Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 
 ## Install
 
-1. Open the Chrome Web Store link (unlisted, shared within the team) and click **Add to Chrome**.
+1. Find **Quick Time Log & Edit for Everhour on Trello** in the Chrome Web Store and click **Add to Chrome**.
 2. Pin the clock icon from Chrome's puzzle-piece menu.
 3. Open a Trello board that uses the Everhour Power-Up and click the clock icon. The panel opens beside the board.
 

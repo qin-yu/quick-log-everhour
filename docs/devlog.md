@@ -243,3 +243,9 @@ Still open: choose where the repo lives (the user's own account or the Crick org
 The repo is public at <https://github.com/qin-yu/quick-log-everhour> under the user's own account, with the rewritten history. The privacy policy URL for the store is <https://github.com/qin-yu/quick-log-everhour/blob/main/PRIVACY.md>, and it opens without signing in. `docs/store-listing.md` now has that URL.
 
 Still open: register the Chrome Web Store developer account, upload `dist/quick-time-log-0.1.0.zip` as Unlisted, and share the link with the team.
+
+## 2026-11-19 — Submitted as Public
+
+While filling in the Chrome Web Store dashboard, the user chose **Public** visibility instead of the planned Unlisted. Anyone can now find the listing in the store. README, CLAUDE.md and `docs/store-listing.md` were updated to match. The listing notes also gained the homepage and support URLs (the GitHub repo and its issues) and test instructions for the reviewer.
+
+What changes in practice: people outside the team will install it, so support will come through GitHub issues and store reviews. If an Everhour update breaks the extension, strangers will notice too.
