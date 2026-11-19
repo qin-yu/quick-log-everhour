@@ -59,6 +59,12 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 - Panel UI without the extension: `python3 dev/serve.py`, then open <http://localhost:8765/src/sidepanel/index.html>. It injects `dev/mock-chrome.js`, a fake `chrome.*` with made-up cards and records; `window.__mock.calls` lists every op the panel sent and `window.__mock.fail = '<op>'` makes that op fail. Browser automation can't open `chrome-extension://` pages, so this is how the panel gets driven.
 - End to end: add time on the test board via Everhour. The panel should update without a reload. Edit and delete the record from the panel, then check Everhour's Edit time view.
 
+## Release
+
+- Distributed through the Chrome Web Store as **Unlisted**: only people with the link can install it.
+- Bump `version` in `manifest.json`, then run `npm run package`. It runs the unit tests, checks that every file the manifest references exists, and writes `dist/quick-time-log-<version>.zip` containing only `manifest.json`, `icons/*.png` and `src/`. Upload that zip in the developer dashboard.
+- Before uploading, run the end-to-end check on the test board, and after any change to the hook, a read-only check on the real board.
+
 ## Conventions
 
 - Conventional Commits, one commit per semantically separate step, with no AI attribution trailers.

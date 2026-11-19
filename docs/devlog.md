@@ -160,3 +160,5 @@ The user chose route 2: publish to the Chrome Web Store as **Unlisted** for the 
 - The store name is **Quick Time Log & Edit for Everhour on Trello**, 44 of 75 characters, chosen by the user. Brands come last in the "… for X" form, so it doesn't read as an official Trello or Everhour product. `short_name` is "Quick Time Log", and the toolbar tooltip is "Quick Time Log & Edit".
 - The manifest description doubles as the store summary, 113 of 132 characters.
 - The icon is a white clock with speed lines on an indigo tile, kept away from Trello blue. It's drawn in `icons/icon.svg` with Chrome's 16 px transparent margin. The toolbar sizes come from a full-bleed, clock-only `icons/icon-small.svg` so they stay legible at 16 px. Rendered with `rsvg-convert`.
+
+**Step 3 — packaging.** Added `scripts/package.sh`, run as `npm run package`. It refuses to build if the unit tests fail or if any path in the manifest is missing. Otherwise it writes `dist/quick-time-log-<version>.zip` with the 13 files the extension loads, leaving out dev, tests, docs and the SVG sources. `dist/` is gitignored. Added a Release section to CLAUDE.md.
