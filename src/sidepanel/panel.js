@@ -108,14 +108,14 @@ async function op(name, args = {}) {
     res = await chrome.tabs.sendMessage(state.tabId, { type: 'everhour-op', op: name, args });
   } catch (err) {
     if (/Receiving end does not exist|Could not establish connection/i.test(String(err?.message))) {
-      throw new Error('Everhour is not loaded in this tab. Open a board that has the Everhour Power-Up; if you just installed or reloaded trello-fast, reload the Trello tab once.');
+      throw new Error('Everhour is not loaded in this tab. Open a board that has the Everhour Power-Up; if you just installed or updated this extension, reload the Trello tab once.');
     }
     throw err;
   }
   if (!res) throw new Error('No answer from Everhour in this tab. Reload the Trello tab.');
-  // The panel loads fresh from disk, but the page scripts only update after an extension reload plus a tab reload.
+  // After an update the panel is already new, but an open Trello tab keeps the old page scripts until it reloads.
   if (!res.ok && /^Unknown request /.test(res.error ?? '')) {
-    throw new Error('This Trello tab is still running an older trello-fast. Click ↻ on trello-fast in chrome://extensions, then reload this Trello tab.');
+    throw new Error('This Trello tab is still running the previous version of the extension. Reload the Trello tab.');
   }
   if (!res.ok) throw new Error(res.error || 'Everhour request failed');
   return res.data;
