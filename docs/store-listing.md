@@ -81,17 +81,14 @@ Tick all three certifications: data is not sold or transferred to third parties,
 
 ## Test instructions tab
 
-For the reviewer; paste as is:
+For the reviewer; the field takes at most 500 characters (this is 457). Paste as is:
 
 ```
-The extension has no account or sign-in of its own. It works only on Trello boards that use the Everhour Power-Up.
-
-1. Sign in to Trello and open any board. Add the Everhour Power-Up (Power-Ups > search "Everhour" > Add) and connect it to an Everhour account when it asks.
-2. Reload the board, then click the extension's toolbar icon. The side panel opens beside the board with this week's time and your latest entries.
-3. In the panel, pick a card, type a time such as 1:30 and press Log. The entry appears in the week table, at the top of Latest entries and on the card's Everhour badge.
-4. Click the entry to change its time or comment and press Save, or use the bin icon to delete it. Undo in the bar at the bottom of the panel (or Cmd/Ctrl+Z) reverts each change.
-
-On a page that is not a Trello board, the panel asks you to open a board that uses Everhour.
+Needs a Trello board with the Everhour Power-Up; the extension has no sign-in of its own.
+1. On any Trello board, add the Everhour Power-Up and connect an Everhour account.
+2. Reload the board and click the toolbar icon. The side panel shows your week and latest entries.
+3. Pick a card, type 1:30, press Log. The entry shows in the panel and on the card's Everhour badge.
+4. Click the entry to edit or delete it. Undo at the bottom (or Cmd/Ctrl+Z) reverts.
 ```
 
 ## Distribution tab
