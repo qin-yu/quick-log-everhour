@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Store screenshot</title>
+  <!-- Chrome Web Store screenshot: 640x400 CSS px, rendered at 2x = 1280x800 by dev/store-assets.sh. ?shot=1|2 -->
+  <style>
+    :root { color-scheme: light; }
+    html, body { margin: 0; }
+    body {
+      width: 640px; height: 400px; overflow: hidden; display: flex;
+      font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(160deg, #5548e6, #3529b5); color: #fff;
+    }
+    .copy { flex: 1; padding: 34px 20px 0 30px; }
+    .copy img { width: 40px; height: 40px; display: block; }
+    h1 { font-size: 21px; line-height: 1.2; margin: 14px 0 6px; letter-spacing: -0.01em; }
+    .sub { margin: 0 0 18px; color: rgba(255, 255, 255, 0.78); }
+    ul { margin: 0; padding: 0; list-style: none; }
+    li { position: relative; margin: 0 0 10px; padding-left: 18px; }
+    li::before { content: ""; position: absolute; left: 0; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: #b9b3ff; }
+    .frame {
+      width: 340px; height: 380px; margin: 20px 16px 0 0; border-radius: 10px 10px 0 0; overflow: hidden;
+      background: #fff; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+    }
+    iframe { display: block; border: 0; width: 340px; height: 380px; color-scheme: light; }
+  </style>
+</head>
+<body>
+  <div class="copy">
+    <img src="/icons/icon-128.png" alt="">
+    <h1 id="headline"></h1>
+    <p class="sub" id="sub"></p>
+    <ul id="points"></ul>
+  </div>
+  <div class="frame"><iframe id="panel" src="/src/sidepanel/index.html" title="Side panel"></iframe></div>
+  <script>
+    const SHOTS = {
+      1: {
+        headline: 'Your Everhour week, always up to date',
+        sub: 'A side panel for Trello boards that track time with Everhour.',
+        points: ['Cards × days, with totals against your weekly target', 'Refreshes by itself whenever Everhour saves time', 'Log time from the panel, or click a cell to prefill it'],
+      },
+      2: {
+        headline: 'Fix a typo in seconds',
+        sub: 'Your latest entries come first. No filters, no date ranges.',
+        points: ['Edit time, date or comment in place', 'Delete with a quick confirm', 'Undo any save or delete'],
+      },
+    };
+    const shot = new URLSearchParams(location.search).get('shot') === '2' ? 2 : 1;
+    const copy = SHOTS[shot];
+    document.getElementById('headline').textContent = copy.headline;
+    document.getElementById('sub').textContent = copy.sub;
+    document.getElementById('points').replaceChildren(...copy.points.map((p) => Object.assign(document.createElement('li'), { textContent: p })));
+
+    const frame = document.getElementById('panel');
+    const until = async (fn) => {
+      for (let i = 0; i < 200; i++) {
+        const v = fn();
+        if (v) return v;
+        await new Promise((r) => setTimeout(r, 25));
+      }
+      throw new Error('timed out');
+    };
+    frame.addEventListener('load', async () => {
+      const w = frame.contentWindow;
+      const d = frame.contentDocument;
+      await until(() => d.querySelector('#recent li[data-id]'));
+      if (shot === 1) {
+        d.getElementById('add-time').value = '1:30';
+        d.getElementById('add-comment').value = 'code review';
+      } else {
+        const li = d.querySelectorAll('#recent li[data-id]')[1];
+        li.querySelector('.meta').click();
+        await until(() => d.getElementById('ed-dur'));
+        d.getElementById('ed-dur').value = '3h 15m';
+        w.scrollTo(0, li.getBoundingClientRect().top + w.scrollY - 52);
+      }
+      document.body.dataset.ready = '1';
+    });
+  </script>
+</body>
+</html>

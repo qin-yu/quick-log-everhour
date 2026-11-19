@@ -64,6 +64,8 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 - Distributed through the Chrome Web Store as **Unlisted**: only people with the link can install it.
 - Bump `version` in `manifest.json`, then run `npm run package`. It runs the unit tests, checks that every file the manifest references exists, and writes `dist/quick-time-log-<version>.zip` containing only `manifest.json`, `icons/*.png` and `src/`. Upload that zip in the developer dashboard.
 - Before uploading, run the end-to-end check on the test board, and after any change to the hook, a read-only check on the real board.
+- [docs/store-listing.md](docs/store-listing.md) has the text for every dashboard field: description, permission justifications and data-use answers. Keep it in step with what the code does, and keep [PRIVACY.md](PRIVACY.md) in step too.
+- Store images live in `store/` and are regenerated with `sh dev/store-assets.sh`. It runs headless Chrome over `dev/store-shot.html` at 2x for the 1280×800 screenshots and `rsvg-convert` for the promo tile. The mock data in `dev/mock-chrome.js` must stay made-up, never real card names, because the listing is public to anyone with the link.
 
 ## Conventions
 
