@@ -36,7 +36,14 @@ Requires a Trello board with the Everhour Power-Up. Works on your own entries on
 Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 ```
 
-**Category** is Productivity → Workflow & Planning. **Language** is English.
+**Category** is Productivity → Workflow & Planning. **Language** is English (United Kingdom).
+
+**Additional fields:**
+
+- Official URL: leave empty. It needs a site verified in Google Search Console.
+- Homepage URL: <https://github.com/qin-yu/quick-log-everhour>
+- Support URL: <https://github.com/qin-yu/quick-log-everhour/issues>
+- Mature content: no.
 
 **Graphics:**
 
@@ -71,6 +78,21 @@ The screenshots use made-up data from `dev/mock-chrome.js`. Never use screenshot
 Tick all three certifications: data is not sold or transferred to third parties, not used for purposes unrelated to the single purpose, and not used for creditworthiness or lending.
 
 **Privacy policy URL:** <https://github.com/qin-yu/quick-log-everhour/blob/main/PRIVACY.md>. It must open without signing in, so the repo has to stay public.
+
+## Test instructions tab
+
+For the reviewer; paste as is:
+
+```
+The extension has no account or sign-in of its own. It works only on Trello boards that use the Everhour Power-Up.
+
+1. Sign in to Trello and open any board. Add the Everhour Power-Up (Power-Ups > search "Everhour" > Add) and connect it to an Everhour account when it asks.
+2. Reload the board, then click the extension's toolbar icon. The side panel opens beside the board with this week's time and your latest entries.
+3. In the panel, pick a card, type a time such as 1:30 and press Log. The entry appears in the week table, at the top of Latest entries and on the card's Everhour badge.
+4. Click the entry to change its time or comment and press Save, or use the bin icon to delete it. Undo in the bar at the bottom of the panel (or Cmd/Ctrl+Z) reverts each change.
+
+On a page that is not a Trello board, the panel asks you to open a board that uses Everhour.
+```
 
 ## Distribution tab
 
