@@ -249,3 +249,13 @@ Still open: register the Chrome Web Store developer account, upload `dist/quick-
 While filling in the Chrome Web Store dashboard, the user chose **Public** visibility instead of the planned Unlisted. Anyone can now find the listing in the store. README, CLAUDE.md and `docs/store-listing.md` were updated to match. The listing notes also gained the homepage and support URLs (the GitHub repo and its issues) and test instructions for the reviewer.
 
 What changes in practice: people outside the team will install it, so support will come through GitHub issues and store reviews. If an Everhour update breaks the extension, strangers will notice too.
+
+## 2026-11-19 — Submitted for review
+
+Version 0.1.0 was submitted to the Chrome Web Store as a Public item with ID `aiecjmnlmjibieahllgholncfkplddhm`. The store gave a 500-character limit for the reviewer's test instructions, so they were shortened to fit.
+
+Next steps:
+
+- Wait for the review result, which arrives by email to the developer account.
+- If the item is rejected, fix whatever the reason names, bump the version and upload again.
+- Once it is live, uninstall or turn off the unpacked copy. Two copies would put two bridges in the same Everhour frames.
