@@ -237,3 +237,9 @@ The repo is going public on GitHub, so that the privacy policy has a public addr
 - A bundle of the history from before the rewrite is in the session scratchpad. That folder is temporary, so the bundle isn't a lasting backup.
 
 Still open: choose where the repo lives (the user's own account or the Crick org), create it, push, and put PRIVACY.md's public URL into `docs/store-listing.md`.
+
+## 2026-11-19 — Public on GitHub
+
+The repo is public at <https://github.com/qin-yu/quick-log-everhour> under the user's own account, with the rewritten history. The privacy policy URL for the store is <https://github.com/qin-yu/quick-log-everhour/blob/main/PRIVACY.md>, and it opens without signing in. `docs/store-listing.md` now has that URL.
+
+Still open: register the Chrome Web Store developer account, upload `dist/quick-time-log-0.1.0.zip` as Unlisted, and share the link with the team.

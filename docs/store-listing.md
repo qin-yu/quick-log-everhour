@@ -70,7 +70,7 @@ The screenshots use made-up data from `dev/mock-chrome.js`. Never use screenshot
 
 Tick all three certifications: data is not sold or transferred to third parties, not used for purposes unrelated to the single purpose, and not used for creditworthiness or lending.
 
-**Privacy policy URL:** a public address for [PRIVACY.md](../PRIVACY.md). It must open without signing in to anything, for example a public repo, a public Gist or a Crick web page.
+**Privacy policy URL:** <https://github.com/qin-yu/quick-log-everhour/blob/main/PRIVACY.md>. It must open without signing in, so the repo has to stay public.
 
 ## Distribution tab
 
