@@ -20,7 +20,7 @@ const state = {
   recentShown: RECENT_PAGE,
   freshId: null, // id to flash once in the recent list
   editing: null, // {id, mode: 'edit' | 'delete'} while an editor is open
-  statusKind: null,
+  undo: null, // what ⌘Z / the toast's Undo button does right now
   loadSeq: 0,
 };
 
@@ -37,20 +37,32 @@ function h(tag, props = {}, ...children) {
   return el;
 }
 
-// kind: 'info' (cleared by the next successful load), 'error', or 'note' (stays until replaced, dismissed or timed out).
-let noteTimer = null;
-function setStatus(text, kind = 'info', action = null) {
+// Top line for loading and load errors: kind 'info' or 'error'. The next successful load clears it.
+function setStatus(text, kind = 'info') {
   const el = $('status');
-  clearTimeout(noteTimer);
-  state.statusKind = text ? kind : null;
   el.hidden = !text;
   el.className = `status ${kind}`;
   el.replaceChildren();
   if (!text) return;
   el.append(h('span', {}, text));
-  if (action) el.append(h('button', { class: 'link', onClick: action.run }, action.label));
-  if (kind !== 'info') el.append(h('button', { class: 'link dismiss', title: 'Dismiss', 'aria-label': 'Dismiss', onClick: () => setStatus('') }, '✕'));
-  if (kind === 'note') noteTimer = setTimeout(() => setStatus(''), 20000);
+  if (kind === 'error') el.append(h('button', { class: 'link dismiss', title: 'Dismiss', 'aria-label': 'Dismiss', onClick: () => setStatus('') }, '✕'));
+}
+
+// Floating bar at the bottom for the outcome of a write, so it is in view wherever the panel is scrolled.
+// With `undo`, it offers an Undo button (and ⌘Z / Ctrl+Z) until it times out or is replaced.
+let toastTimer = null;
+function toast(text, { kind = 'note', undo = null, sticky = false } = {}) {
+  const el = $('toast');
+  clearTimeout(toastTimer);
+  state.undo = undo;
+  el.hidden = !text;
+  el.className = `toast ${kind}`;
+  el.replaceChildren();
+  if (!text) return;
+  el.append(h('span', {}, text));
+  if (undo) el.append(h('button', { class: 'link', title: 'Undo (⌘Z / Ctrl+Z)', onClick: undo }, 'Undo'));
+  el.append(h('button', { class: 'link dismiss', title: 'Dismiss', 'aria-label': 'Dismiss', onClick: () => toast('') }, '✕'));
+  if (!sticky) toastTimer = setTimeout(() => toast(''), undo ? 30000 : 6000);
 }
 
 // ---------------------------------------------------------------- talking to the Everhour frame
@@ -109,7 +121,7 @@ async function load({ quiet = false } = {}) {
     state.ctx = ctx;
     state.cards = new Map((cards ?? []).map((c) => [c.id, c]));
     state.mine = myRecords(records.map(normaliseRecord), ctx.member.id);
-    if (state.statusKind !== 'note') setStatus('');
+    setStatus('');
   } catch (err) {
     if (seq !== state.loadSeq) return;
     setStatus(String(err.message ?? err), 'error');
@@ -212,8 +224,8 @@ add.form.addEventListener('submit', async (e) => {
   const id = Number(rec?.id) || null;
   state.freshId = id;
   if (weekStart(date) !== state.monday) { state.monday = weekStart(date); saveSettings(); }
-  setStatus(`Logged ${formatDuration(seconds)} on ${cardName(cardId)}, ${shortDate(date)}.`, 'note',
-    id ? { label: 'Undo', run: () => undoWrite({ id }, [{ time: 0 }]) } : null);
+  toast(`Logged ${formatDuration(seconds)} on ${cardName(cardId)}, ${shortDate(date)}.`,
+    { undo: id ? () => undoWrite({ id }, [{ time: 0 }]) : null });
   await load({ quiet: true });
 });
 
@@ -383,19 +395,19 @@ async function write(rec, patches, box, verb) {
   const undo = editPatches(after, rec);
   state.editing = null;
   state.freshId = rec.id;
-  setStatus(`${verb}: ${cardName(rec.cardId)}, ${formatDuration(after.seconds || rec.seconds)} on ${shortDate(after.date)}.`, 'note',
-    undo.length ? { label: 'Undo', run: () => undoWrite(rec, undo) } : null);
+  toast(`${verb}: ${cardName(rec.cardId)}, ${formatDuration(after.seconds || rec.seconds)} on ${shortDate(after.date)}.`,
+    { undo: undo.length ? () => undoWrite(rec, undo) : null });
   await load({ quiet: true });
 }
 
 async function undoWrite(rec, patches) {
-  setStatus('Undoing…');
+  toast('Undoing…', { sticky: true });
   try {
     await op('updateTime', { id: rec.id, patches });
     state.freshId = rec.id;
-    setStatus('Undone.', 'note');
+    toast('Undone.');
   } catch (err) {
-    setStatus(`Undo failed: ${err.message ?? err}`, 'error');
+    toast(`Undo failed: ${err.message ?? err}`, { kind: 'error', sticky: true });
   }
   await load({ quiet: true });
 }
@@ -436,6 +448,14 @@ chrome.tabs.onActivated.addListener(({ windowId }) => { if (windowId === state.w
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (tab.windowId !== state.windowId || !tab.active) return;
   if (info.url && !isTrelloBoardUrl(info.url)) load();
+});
+document.addEventListener('keydown', (e) => {
+  const undoKey = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z';
+  if (!undoKey || !state.undo) return;
+  const field = e.target.closest?.('input, textarea, select');
+  if (field && field.value !== '') return; // a field with text keeps its own undo; an empty one (e.g. time after Log) doesn't need it
+  e.preventDefault();
+  state.undo();
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') scheduleReload(0); });
 

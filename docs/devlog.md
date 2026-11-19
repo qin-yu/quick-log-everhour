@@ -190,3 +190,16 @@ The user chose route 2: publish to the Chrome Web Store as **Unlisted** for the 
 - The new mark is a clock whose hand at 2 o'clock leaves a motion blur and three fading ghost hands, so the speed reads at 48 px and the clock at 16 px. The old speed lines are gone.
 - My first versions laid wedges side by side, which left visible seams with alpha, and read as a speedometer. The fix stacks wedges that all start at the hand and reach back different distances.
 - `icons/build.py` now generates all the artwork, including the promo tile. Store images were regenerated.
+
+## 2026-11-19 — Test-board run, and Undo moved to a toast
+
+**User test on the test board:** log, edit and delete all work against the real Everhour. This is the first live confirmation of the write path. **But they couldn't find Undo.** It lived in the status line at the top of the panel, which isn't sticky. When you edit an entry further down the list, that line is scrolled out of view, and it vanished after 20 s.
+
+**Fix:**
+
+- The outcome of a write is now a toast fixed at the bottom of the panel: "Saved: card, 45m on Mon 16 Nov. Undo ✕". It stays 30 s with Undo, or 6 s without.
+- ⌘Z or Ctrl+Z triggers the same Undo. It's ignored while the focus is in a field with text, so that field's own text undo still works. It does fire in an empty field, so ⌘Z right after Log (when focus is back in the empty time field) undoes the log.
+- The top status line now carries only loading messages and load errors.
+- `main` got bottom padding so the toast can't hide the last entry.
+
+Checked in the harness: the toast stays in view after scrolling down and editing, ⌘Z restores the old time, ⌘Z in a field with text is left alone, and ⌘Z after Log removes the logged entry.
