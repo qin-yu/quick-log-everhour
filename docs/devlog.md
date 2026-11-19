@@ -183,3 +183,10 @@ The user chose route 2: publish to the Chrome Web Store as **Unlisted** for the 
 - registering the developer account (one-time fee, 2-step verification);
 - hosting PRIVACY.md at a public URL;
 - uploading `dist/quick-time-log-0.1.0.zip` as Unlisted.
+
+**Icon v2 — spinning hand.**
+
+- The user asked for an icon based on Everhour's, with its hour hand spinning fast. I kept the idea but not Everhour's logo: a modified third-party logo on a store listing invites an impersonation rejection or a takedown, and it would undo the deliberately non-official name.
+- The new mark is a clock whose hand at 2 o'clock leaves a motion blur and three fading ghost hands, so the speed reads at 48 px and the clock at 16 px. The old speed lines are gone.
+- My first versions laid wedges side by side, which left visible seams with alpha, and read as a speedometer. The fix stacks wedges that all start at the hand and reach back different distances.
+- `icons/build.py` now generates all the artwork, including the promo tile. Store images were regenerated.

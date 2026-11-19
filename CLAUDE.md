@@ -38,7 +38,7 @@ side panel ──chrome.tabs.sendMessage(tabId)──► everhour-bridge (every 
 - `src/lib/everhour.js` normalises records to `{id, date, seconds, comment, memberId, cardId, createdAt}`, turns an edit into per-field PUTs (`editPatches`) and orders the card picker (`cardChoices`).
 - `src/lib/time.js` holds pure helpers: ISO weeks (Mon–Sun), duration parsing (`1.5`, `1:30`, `90m`) and the card × weekday matrix.
 - `src/sidepanel/` holds the panel UI.
-- `icons/` holds the PNGs the manifest uses, rendered with `rsvg-convert` from `icon.svg` (48 and 128 px, with Chrome's 16 px margin) and `icon-small.svg` (16 and 32 px, full bleed).
+- `icons/` holds the PNGs the manifest uses. `python3 icons/build.py` is the source of the artwork: a clock whose hand is spinning fast, shown as a motion blur plus ghost hands. It writes `icon.svg` (48 and 128 px, with Chrome's 16 px margin), `icon-small.svg` (16 and 32 px, full bleed) and `store/promo-small.svg`, then renders the PNGs with `rsvg-convert`. The artwork is our own, never a modified Everhour or Trello logo, because the listing must not look official.
 
 Everhour record IDs increase monotonically, so "most recently entered" means sorting by `id` descending. Records also carry `createdAt`. Delete is `PUT /trello/time/{id}` with `{time: 0}`, because Everhour has no DELETE.
 
