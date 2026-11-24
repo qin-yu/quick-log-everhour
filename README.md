@@ -46,3 +46,7 @@ There is no API key, no extra sign-in and no server of our own. Data goes only t
 - `npm run package` builds `dist/quick-time-log-<version>.zip` for the Chrome Web Store. [docs/store-listing.md](docs/store-listing.md) has the text for every dashboard field.
 
 Design notes are in [CLAUDE.md](CLAUDE.md), [docs/everhour-api.md](docs/everhour-api.md) and the [devlog](docs/devlog.md).
+
+## License
+
+[MIT](LICENSE). Issues and pull requests are welcome.

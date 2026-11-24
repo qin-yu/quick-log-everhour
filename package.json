@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "description": "Chrome side panel for logging and fixing Everhour time on Trello faster",
+  "license": "MIT",
   "scripts": {
     "test": "node --test tests/",
     "package": "sh scripts/package.sh"

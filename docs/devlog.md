@@ -259,3 +259,9 @@ Next steps:
 - Wait for the review result, which arrives by email to the developer account.
 - If the item is rejected, fix whatever the reason names, bump the version and upload again.
 - Once it is live, uninstall or turn off the unpacked copy. Two copies would put two bridges in the same Everhour frames.
+
+## 2026-11-24 — MIT licence
+
+The user decided to keep the repo on their own GitHub account rather than move it to the Crick org, and to license it under MIT so that anyone, colleagues included, can use it and contribute. Added `LICENSE` with the copyright held by Qin Yu, a License section in the README and `"license": "MIT"` in `package.json`.
+
+The store package is unchanged, because `scripts/package.sh` ships only `manifest.json`, `icons/*.png` and `src/`.
