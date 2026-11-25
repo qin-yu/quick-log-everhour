@@ -2,7 +2,7 @@
   "name": "quick-log-everhour",
   "private": true,
   "type": "module",
-  "description": "Chrome side panel for logging and fixing Everhour time on Trello faster",
+  "description": "Chrome and Firefox side panel for logging and fixing Everhour time on Trello faster",
   "license": "MIT",
   "scripts": {
     "test": "node --test tests/",

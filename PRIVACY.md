@@ -1,6 +1,6 @@
 # Privacy policy
 
-This policy covers **Quick Time Log & Edit for Everhour on Trello**, the Chrome extension ("the extension"). Last updated: 19 November 2026.
+This policy covers **Quick Time Log & Edit for Everhour on Trello**, the browser extension for Chrome and Firefox ("the extension"). Last updated: 25 November 2026.
 
 ## Summary
 
@@ -8,7 +8,7 @@ The extension has no server, no analytics and no tracking. It shows and changes 
 
 ## What the extension accesses
 
-It accesses the following only on a Trello board that uses the Everhour Power-Up, and only while the side panel is open:
+It accesses the following only on a Trello board that uses the Everhour Power-Up, and only while its panel (Chrome's side panel or Firefox's sidebar) is open:
 
 - your Trello member ID and name, and the board's ID and name;
 - the board's card names and lists, so each entry can show which card it belongs to;
@@ -25,10 +25,10 @@ Nothing is sent to the developer or to any other third party. Data is not sold, 
 
 ## What the extension stores
 
-It stores two settings in Chrome's local extension storage on your computer: the week you last viewed and your weekly target in hours.
+It stores two settings in the browser's local extension storage on your computer: the week you last viewed and your weekly target in hours.
 
 Time entries and tokens stay in memory while the panel is open and are never written to disk. Uninstalling the extension removes the settings.
 
 ## Changes and contact
 
-Changes to this policy will be published at this address with a new date. For questions, use the contact details on the extension's Chrome Web Store page.
+Changes to this policy will be published at this address with a new date. For questions, open an issue at <https://github.com/qin-yu/quick-log-everhour/issues> or use the contact details on the extension's Chrome Web Store or Firefox Add-ons page.

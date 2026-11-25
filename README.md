@@ -1,6 +1,6 @@
 # Quick Time Log & Edit for Everhour on Trello
 
-A Chrome side panel for Trello boards that track time with the [Everhour](https://everhour.com) Power-Up. It shows your week at a glance and your latest entries. You can log, edit or delete time without going through Everhour's reports and filters.
+A side panel for Trello boards that track time with the [Everhour](https://everhour.com) Power-Up, for Chrome and Firefox (where it is a sidebar). It shows your week at a glance and your latest entries. You can log, edit or delete time without going through Everhour's reports and filters.
 
 Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 
@@ -17,11 +17,19 @@ Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 
 ## Install
 
+**Chrome** (116 or later):
+
 1. Find **Quick Time Log & Edit for Everhour on Trello** in the Chrome Web Store and click **Add to Chrome**.
 2. Pin the clock icon from Chrome's puzzle-piece menu.
 3. Open a Trello board that uses the Everhour Power-Up and click the clock icon. The panel opens beside the board.
 
-If the panel says Everhour isn't loaded, or that the tab is running an older version, reload the Trello tab once. You need to do this after installing or updating the extension.
+**Firefox** (140 or later). The add-on is not on Firefox Add-ons yet; until it is, run it from source as described under Development.
+
+1. Find **Quick Time Log & Edit for Everhour on Trello** on Firefox Add-ons and click **Add to Firefox**.
+2. Pin the clock icon from Firefox's Extensions (puzzle-piece) menu.
+3. Open a Trello board that uses the Everhour Power-Up and click the clock icon. The panel opens as a sidebar; click the icon again to close it.
+
+If the panel says Everhour isn't loaded, or that the tab is running an older version, reload the Trello tab once. You need to do this after installing or updating the extension. If it says it isn't allowed on trello.com, turn site access back on for trello.com and app.everhour.com: in Chrome under the extension's Details → Site access, in Firefox under about:addons → the extension → Permissions.
 
 ## How it works
 
@@ -39,11 +47,13 @@ There is no API key, no extra sign-in and no server of our own. Data goes only t
 
 ## Development
 
-- To run from source, open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick this folder. After changing anything under `src/content/`, click ↻ on the extension and reload the Trello tab.
+- To run from source in Chrome (121 or later), open `chrome://extensions`, turn on Developer mode, click **Load unpacked** and pick this folder. After changing anything under `src/content/`, click ↻ on the extension and reload the Trello tab.
+- To run from source in Firefox, open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on…** and pick `manifest.json`. It stays until Firefox quits; after changing anything under `src/content/`, click **Reload** there and reload the Trello tab. `npx web-ext run --start-url <board URL>` does the same in a fresh profile and reloads on every save.
+- `manifest.json` carries both browsers' keys, so each browser warns about the other's (`side_panel` and `sidePanel` in Firefox, `sidebar_action` and `browser_specific_settings` in Chrome). The packaged zips don't have these warnings.
 - `npm test` runs the unit tests. It needs Node 18 or later; there are no dependencies.
 - `python3 dev/serve.py` serves the panel on mock data at <http://localhost:8765/src/sidepanel/index.html>.
 - `sh dev/store-assets.sh` regenerates the store images in `store/`.
-- `npm run package` builds `dist/quick-time-log-<version>.zip` for the Chrome Web Store. [docs/store-listing.md](docs/store-listing.md) has the text for every dashboard field.
+- `npm run package` builds `dist/quick-time-log-<version>-chrome.zip` for the Chrome Web Store and `dist/quick-time-log-<version>-firefox.zip` for Firefox Add-ons, each with only its own browser's manifest keys. `npx web-ext lint --source-dir dist/firefox` checks the Firefox one. [docs/store-listing.md](docs/store-listing.md) has the text for every dashboard field.
 
 Design notes are in [CLAUDE.md](CLAUDE.md), [docs/everhour-api.md](docs/everhour-api.md) and the [devlog](docs/devlog.md).
 

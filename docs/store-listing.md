@@ -1,8 +1,12 @@
-# Chrome Web Store listing
+# Store listings
 
-Text and choices for each field in the developer dashboard. The package is `dist/quick-time-log-<version>.zip`, built with `npm run package`.
+Text and choices for each field in the Chrome Web Store and Firefox Add-ons developer dashboards. `npm run package` builds one zip per store from the same source; see [Before each upload](#before-each-upload).
 
-## Store listing tab
+## Chrome Web Store
+
+Upload `dist/quick-time-log-<version>-chrome.zip`.
+
+### Store listing tab
 
 **Name** comes from `manifest.json`: Quick Time Log & Edit for Everhour on Trello
 
@@ -55,7 +59,7 @@ Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 
 The screenshots use made-up data from `dev/mock-chrome.js`. Never use screenshots of the real board, because the listing is public. Regenerate them with `sh dev/store-assets.sh`.
 
-## Privacy tab
+### Privacy tab
 
 **Single purpose:** Show and edit your own Everhour time entries for the open Trello board in Chrome's side panel.
 
@@ -79,7 +83,7 @@ Tick all three certifications: data is not sold or transferred to third parties,
 
 **Privacy policy URL:** <https://github.com/qin-yu/quick-log-everhour/blob/main/PRIVACY.md>. It must open without signing in, so the repo has to stay public.
 
-## Test instructions tab
+### Test instructions tab
 
 For the reviewer; the field takes at most 500 characters (this is 457). Paste as is:
 
@@ -91,16 +95,50 @@ Needs a Trello board with the Everhour Power-Up; the extension has no sign-in of
 4. Click the entry to edit or delete it. Undo at the bottom (or Cmd/Ctrl+Z) reverts.
 ```
 
-## Distribution tab
+### Distribution tab
 
 - **Visibility:** Public. The first plan was Unlisted, but the user chose Public at submission.
 - **Regions:** all.
 - **Price:** free.
 
+## Firefox Add-ons (addons.mozilla.org)
+
+Upload `dist/quick-time-log-<version>-firefox.zip` at <https://addons.mozilla.org/developers/>. The add-on ID is `quick-log-everhour@qin-yu.github.io` in `browser_specific_settings.gecko.id`. Once the first version is uploaded, that ID can never change: every later upload must carry it.
+
+### Submit a new add-on
+
+- **Distribution:** On this site (listed), to match the Chrome Web Store's Public.
+- **Compatibility:** Firefox only. Untick Firefox for Android: it has no sidebar, and `strict_min_version` 140 is below the Android version (142) that understands `data_collection_permissions`, which is why `web-ext lint` warns about Android.
+- **Source code:** No. The package is the source as written: nothing is minified, bundled or transpiled.
+
+### Describe add-on
+
+- **Name** comes from `manifest.json`: Quick Time Log & Edit for Everhour on Trello
+- **Add-on URL:** `quick-time-log-everhour`
+- **Summary** (at most 250 characters): See your Everhour week on Trello in a sidebar, and log, fix or delete entries without hunting through filters.
+- **Description:** paste the Chrome description above, with its first line changed to `A sidebar for Trello boards that track time with the Everhour Power-Up.`
+- **Categories:** AMO has no Productivity category; pick the closest one offered, or Other.
+- **Support website:** <https://github.com/qin-yu/quick-log-everhour/issues>. **Homepage:** <https://github.com/qin-yu/quick-log-everhour>.
+- **License:** MIT.
+- **Privacy policy:** AMO takes the text itself rather than a URL. Paste the body of [PRIVACY.md](../PRIVACY.md).
+- **Screenshots:** `store/screenshot-1.png` and `store/screenshot-2.png`. The icon comes from the package.
+
+### Data collection
+
+Firefox shows the manifest's `browser_specific_settings.gecko.data_collection_permissions` at install, and AMO requires it for new add-ons. It is set to match the Chrome Web Store's data-usage answers: `personallyIdentifyingInfo`, `authenticationInfo`, `websiteActivity` and `websiteContent`, all `required`, so users accept them at install.
+
+**Open.** Mozilla's policy may not count data that goes only to the service the user is already using (Everhour, through its own Power-Up connection) as collection. If the policy section "Data Collection and Transmission" says so, change it to `"required": ["none"]` before the first upload, and there is no consent prompt at install.
+
+### Notes to reviewer
+
+Paste the Chrome test instructions above, with step 2 ending "The sidebar shows your week and latest entries." instead of "The side panel shows…". Add that `everhour-hook.js` runs in the page's MAIN world because it has to receive the Power-Up client handle that Trello's library passes to Everhour's frame, and that it wraps `fetch` there only to notice Everhour's own time saves.
+
 ## Before each upload
 
-1. Bump `version` in `manifest.json`. The store rejects a version it has already seen.
-2. Run the end-to-end check on the test board: log, edit, delete and Undo, with Everhour's badge and Edit time agreeing.
-3. If anything under `src/content/` changed, do a read-only check on the real board.
-4. Run `npm run package` and upload the zip.
-5. After the update reaches people, tell them to reload their Trello tab once. The panel says so too if they forget.
+1. Bump `version` in `manifest.json`. Both stores reject a version they have already seen.
+2. Run the end-to-end check on the test board, in Chrome and in Firefox: log, edit, delete and Undo, with Everhour's badge and Edit time agreeing.
+3. If anything under `src/content/` changed, do a read-only check on the real board in both browsers.
+4. Run `npm run package`. It builds `dist/quick-time-log-<version>-chrome.zip` and `dist/quick-time-log-<version>-firefox.zip`.
+5. Run `npx web-ext lint --source-dir dist/firefox`. It must report 0 errors. Two warnings are expected: the Android minimum version, and `sidePanel.setPanelBehavior`, which `src/background.js` calls only when `chrome.sidePanel` exists.
+6. Upload each zip to its store.
+7. After the update reaches people, tell them to reload their Trello tab once. The panel says so too if they forget.

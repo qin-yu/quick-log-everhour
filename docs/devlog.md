@@ -265,3 +265,48 @@ Next steps:
 The user decided to keep the repo on their own GitHub account rather than move it to the Crick org, and to license it under MIT so that anyone, colleagues included, can use it and contribute. Added `LICENSE` with the copyright held by Qin Yu, a License section in the README and `"license": "MIT"` in `package.json`.
 
 The store package is unchanged, because `scripts/package.sh` ships only `manifest.json`, `icons/*.png` and `src/`.
+
+## 2026-11-25 — Firefox support
+
+**Why.** The user wants the extension in Firefox as well as Chrome, under the same rule: no build step and no dependencies, and the repo folder loads unpacked as is.
+
+**Found.** The extension's core already runs in Firefox; only its shell is Chrome-specific.
+
+- Firefox has supported promises on the `chrome.*` namespace in MV3 since version 106, so `panel.js` and the bridge need no polyfill.
+- Firefox has supported `world: "MAIN"` for manifest content scripts since 128.
+- The bridge and hook already pass `CustomEvent` details as JSON strings. Firefox's Xray wrappers would block page code from reading an object created in the isolated world, so strings are the form that works there.
+- The panel binds to its window's active tab. That matches Firefox's sidebar, which is one per window, the same as Chrome's global side panel.
+
+The parts that differ are the panel (`side_panel` in Chrome, `sidebar_action` in Firefox), the background script (a service worker in Chrome, `background.scripts` in Firefox) and Firefox's `browser_specific_settings.gecko`.
+
+**Done.**
+
+- **`manifest.json`** now has both browsers' keys. Chrome 121+ ignores `background.scripts`, and Firefox 121+ ignores `background.service_worker`.
+  - The gecko ID is `quick-log-everhour@qin-yu.github.io`.
+  - `strict_min_version` is 140. MAIN-world content scripts need 128. Firefox 127 and older reject `data_collection_permissions`. Firefox's built-in data consent needs 140, which is also the current ESR.
+  - `data_collection_permissions` mirrors the Chrome Web Store's data-usage answers.
+- **`src/background.js`** picks the side panel when `chrome.sidePanel` exists; otherwise `action.onClicked` calls `browser.sidebarAction.toggle()`. Firefox only opens a sidebar from a user action, so the call is synchronous in the click handler.
+- **`scripts/manifest.js`** has two pure functions, both with unit tests:
+  - `manifestFor(base, browser)` strips the other browser's keys, and for Firefox also `minimum_chrome_version` and the `sidePanel` permission.
+  - `referencedFiles` replaces the inline path check that used to be in `package.sh`.
+- **`npm run package`** now stages `dist/chrome/` and `dist/firefox/` and writes `dist/quick-time-log-<version>-chrome.zip` and `-firefox.zip`.
+- **Panel.** `tab.url` is only visible on sites the extension may access, so it is also missing on any non-Trello tab. The panel now asks `chrome.permissions.contains` for trello.com and, when access was withheld, says how to turn it back on instead of asking for a board. "Everhour is not loaded" now also mentions access to app.everhour.com.
+  - The mock grew `permissions.contains` and a `__mock.noAccess` flag.
+  - Checked in the mock: the hint shows when access is withheld and clears when access is restored.
+- **Docs.** README, PRIVACY.md and `docs/store-listing.md` now cover Firefox; the store listing has a new Firefox Add-ons section.
+
+**Checked.**
+
+- `npx web-ext lint` (10.8.0) on `dist/firefox` gives 0 errors and 2 warnings, both expected:
+  - Android's minimum version: we don't target Android, which has no sidebar.
+  - `sidePanel.setPanelBehavior`: the call is behind the feature check.
+- Linting the repo folder adds the two dev-only warnings, `sidePanel` and `service_worker`.
+- 28 unit tests pass.
+
+**Open.**
+
+- Not yet run in Firefox against Trello. Whether the MAIN-world hook traps `window.TrelloPowerUp` at `document_start` before the Power-Up's own script runs can only be seen on the test board. If it does, the week table loads.
+  - The full end-to-end check also has to be done in Firefox: log, edit, delete, undo and redo, auto-refresh after Everhour's own Add time, card badges and switching tabs.
+  - After that, a read-only check on the real board in Firefox.
+- Chrome regression check of the unpacked folder and of `dist/chrome/`.
+- Before the first AMO upload, decide whether `data_collection_permissions` should stay as the four categories or become `["none"]`. It depends on whether Mozilla counts data that goes only to Everhour as collection. See `docs/store-listing.md`.
