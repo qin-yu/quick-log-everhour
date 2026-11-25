@@ -1,5 +1,5 @@
 // Fake chrome.* so the side panel runs in a normal tab with made-up cards and records. Served by dev/serve.py.
-// Inspect window.__mock: .records, .cards, .calls (every op the panel sent), .fail (set to an op name to make it fail).
+// Inspect window.__mock: .records, .cards, .calls (every op the panel sent), .fail (set to an op name to make it fail), .noAccess (set true, then switch tabs, to act as if trello.com access was withheld).
 (() => {
   const lists = { l1: 'In progress', l2: 'Ongoing' };
   const cards = [
@@ -30,7 +30,7 @@
     rec(admin, day(3), 0.5, 'expenses'), rec(pipeline, day(3), 3, 'backfill October'),
   ];
   const listeners = [];
-  window.__mock = { records, cards, calls: [], fail: null };
+  window.__mock = { records, cards, calls: [], fail: null, noAccess: false };
   const ops = {
     context: () => ({ boardId: 'board1', member: { id: me, fullName: 'Sam Taylor' }, board: { name: 'Team projects' } }),
     cards: () => cards,
@@ -51,7 +51,7 @@
   window.chrome = {
     windows: { getCurrent: async () => ({ id: 1 }) },
     tabs: {
-      query: async () => [{ id: 7, url: 'https://trello.com/b/x/test' }],
+      query: async () => [window.__mock.noAccess ? { id: 7 } : { id: 7, url: 'https://trello.com/b/x/test' }],
       get: async () => ({ id: 7, url: 'https://trello.com/b/x/test' }),
       sendMessage: async (_tab, msg) => {
         window.__mock.calls.push(JSON.parse(JSON.stringify(msg)));
@@ -62,6 +62,7 @@
       onActivated: ev(), onUpdated: ev(),
     },
     runtime: { onMessage: ev() },
+    permissions: { contains: async () => !window.__mock.noAccess },
     storage: { local: { get: async () => ({}), set: async () => {} } },
   };
 })();

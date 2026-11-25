@@ -108,7 +108,7 @@ async function op(name, args = {}) {
     res = await chrome.tabs.sendMessage(state.tabId, { type: 'everhour-op', op: name, args });
   } catch (err) {
     if (/Receiving end does not exist|Could not establish connection/i.test(String(err?.message))) {
-      throw new Error('Everhour is not loaded in this tab. Open a board that has the Everhour Power-Up; if you just installed or updated this extension, reload the Trello tab once.');
+      throw new Error('Everhour is not loaded in this tab. Open a board that has the Everhour Power-Up; if you just installed or updated this extension, reload the Trello tab once. If that doesn’t help, check that the extension is allowed on app.everhour.com.');
     }
     throw err;
   }
@@ -122,6 +122,10 @@ async function op(name, args = {}) {
 }
 
 const isTrelloBoardUrl = (url) => /^https:\/\/trello\.com\/[bc]\//.test(url ?? '');
+// tab.url is only visible on sites we may access, so a missing url means either another site or that the
+// user withheld trello.com (Firefox: about:addons → Permissions; Chrome: Site access).
+const hasTrelloAccess = () => chrome.permissions.contains({ origins: ['https://trello.com/*'] }).catch(() => true);
+const NO_ACCESS = 'This extension isn’t allowed on trello.com, so it can’t see which tab is a board. Allow it on trello.com and app.everhour.com in the extension’s site access settings (Firefox: about:addons → Permissions), then reload the Trello tab.';
 
 async function bindActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, windowId: state.windowId });
@@ -135,7 +139,8 @@ async function bindActiveTab() {
   if (tabId == null) {
     state.mine = [];
     render();
-    setStatus('Open a Trello board that uses Everhour in this window.');
+    const blocked = tab && tab.url === undefined && !(await hasTrelloAccess());
+    setStatus(blocked ? NO_ACCESS : 'Open a Trello board that uses Everhour in this window.');
     return false;
   }
   return true;
