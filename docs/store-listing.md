@@ -113,7 +113,7 @@ Upload `dist/quick-time-log-<version>-firefox.zip` at <https://addons.mozilla.or
 
 ### Describe add-on
 
-- **Name** comes from `manifest.json`: Quick Time Log & Edit for Everhour on Trello
+- **Name:** Quick Time Log (Everhour/Trello). AMO's listing form wouldn't accept the manifest name, which is too long for it, so the listing uses this shorter one. Firefox's Add-ons Manager still shows the manifest name, Quick Time Log & Edit for Everhour on Trello. New uploads don't change the listing name.
 - **Add-on URL:** `quick-time-log-everhour-trello`. The public page will be <https://addons.mozilla.org/firefox/addon/quick-time-log-everhour-trello/> and the edit page is <https://addons.mozilla.org/developers/addon/quick-time-log-everhour-trello/edit>.
 - **Summary** (at most 250 characters): See your Everhour week on Trello in a sidebar, and log, fix or delete entries without hunting through filters.
 - **Description** is plain text; paste the block below as is. It is the Chrome description with "side panel" changed to "sidebar":
@@ -143,7 +143,7 @@ Requires a Trello board with the Everhour Power-Up. Works on your own entries on
 
 Not affiliated with or endorsed by Everhour, Trello or Atlassian.
 ```
-- **Categories:** AMO has no Productivity category; pick the closest one offered, or Other.
+- **Categories:** Other. AMO has no Productivity category. **Tags:** none; AMO's fixed list has nothing that fits.
 - **Support website:** <https://github.com/qin-yu/quick-log-everhour/issues>. **Homepage:** <https://github.com/qin-yu/quick-log-everhour>.
 - **License:** MIT.
 - **Privacy policy:** AMO takes the text itself rather than a URL. Paste the body of [PRIVACY.md](../PRIVACY.md).
