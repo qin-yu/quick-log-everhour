@@ -116,7 +116,33 @@ Upload `dist/quick-time-log-<version>-firefox.zip` at <https://addons.mozilla.or
 - **Name** comes from `manifest.json`: Quick Time Log & Edit for Everhour on Trello
 - **Add-on URL:** `quick-time-log-everhour`
 - **Summary** (at most 250 characters): See your Everhour week on Trello in a sidebar, and log, fix or delete entries without hunting through filters.
-- **Description:** paste the Chrome description above, with its first line changed to `A sidebar for Trello boards that track time with the Everhour Power-Up.`
+- **Description** is plain text; paste the block below as is. It is the Chrome description with "side panel" changed to "sidebar":
+
+```
+A sidebar for Trello boards that track time with the Everhour Power-Up.
+
+YOUR WEEK, ALWAYS CURRENT
+• Cards × Mon–Sun with day and card totals, against your weekly target (35 h by default).
+• Move between weeks with ‹ ›. The sidebar remembers the week you were on.
+• Refreshes by itself whenever you add or change time in Everhour's own dialogs.
+
+LOG TIME FAST
+• Pick a card (recently used first), date and time, then press Enter.
+• Time can be 1.5, 1:30, 90m or 1h 30m.
+• Click a cell in the week table to prefill that card and day.
+
+FIX MISTAKES IN SECONDS
+• Your latest entries come first. No member filter, no date range.
+• Click an entry to change its time, date or comment, or delete it.
+• Undo and redo every log, save and delete, with one click or ⌘Z / ⇧⌘Z (Ctrl+Z / Ctrl+Y).
+
+HOW IT WORKS
+The extension uses the connection Trello already gives the Everhour Power-Up, and sends the same requests Everhour's own dialogs send. There is no API key, no extra sign-in and no server of its own.
+
+Requires a Trello board with the Everhour Power-Up. Works on your own entries only. Click the toolbar icon to open or close the sidebar.
+
+Not affiliated with or endorsed by Everhour, Trello or Atlassian.
+```
 - **Categories:** AMO has no Productivity category; pick the closest one offered, or Other.
 - **Support website:** <https://github.com/qin-yu/quick-log-everhour/issues>. **Homepage:** <https://github.com/qin-yu/quick-log-everhour>.
 - **License:** MIT.
@@ -127,11 +153,27 @@ Upload `dist/quick-time-log-<version>-firefox.zip` at <https://addons.mozilla.or
 
 Firefox shows the manifest's `browser_specific_settings.gecko.data_collection_permissions` at install, and AMO requires it for new add-ons. It is set to match the Chrome Web Store's data-usage answers: `personallyIdentifyingInfo`, `authenticationInfo`, `websiteActivity` and `websiteContent`, all `required`, so users accept them at install.
 
-**Open.** Mozilla's policy may not count data that goes only to the service the user is already using (Everhour, through its own Power-Up connection) as collection. If the policy section "Data Collection and Transmission" says so, change it to `"required": ["none"]` before the first upload, and there is no consent prompt at install.
+**Decided (2026-11-26).** Keep the four categories. Mozilla's policy defines data transmission as any data "handled outside of the add-on" and has no exemption for data sent to the service the user is using, and `"none"` is only for add-ons that collect or transmit nothing. Sending entries to Everhour is transmission, so `"none"` would be wrong.
 
 ### Notes to reviewer
 
-Paste the Chrome test instructions above, with step 2 ending "The sidebar shows your week and latest entries." instead of "The side panel shows…". Add that `everhour-hook.js` runs in the page's MAIN world because it has to receive the Power-Up client handle that Trello's library passes to Everhour's frame, and that it wraps `fetch` there only to notice Everhour's own time saves.
+Paste as is:
+
+```
+Needs a Trello board with the Everhour Power-Up; the extension has no sign-in of its own.
+1. On any Trello board, add the Everhour Power-Up and connect an Everhour account.
+2. Reload the board and click the toolbar icon (in the Extensions menu). The sidebar shows your week and latest entries.
+3. Pick a card, type 1:30, press Log. The entry shows in the sidebar and on the card's Everhour badge.
+4. Click the entry to edit or delete it. Undo at the bottom (or Cmd/Ctrl+Z) reverts.
+
+Why a MAIN-world script: src/content/everhour-hook.js runs only in Everhour's own app.everhour.com/trello-powerup frames. It has to receive the Power-Up client handle that Trello's library passes to Everhour, and uses it the way Everhour does (t.jwt() for the request token, t.cards(), t.set()). It wraps fetch there only to notice Everhour's own successful time saves so the sidebar can refresh.
+
+No remote code, and nothing is minified, bundled or transpiled. Data goes only to Everhour and, through the Power-Up library, to Trello.
+```
+
+### Review and signing
+
+AMO validates the upload automatically, then signs and publishes it, usually within 24 hours. Mozilla can review the code by hand at any time, including after it is published. Once it is listed, Firefox updates installed copies by itself whenever a new version is uploaded.
 
 ## Before each upload
 

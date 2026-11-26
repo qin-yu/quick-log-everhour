@@ -310,3 +310,17 @@ The parts that differ are the panel (`side_panel` in Chrome, `sidebar_action` in
   - After that, a read-only check on the real board in Firefox.
 - Chrome regression check of the unpacked folder and of `dist/chrome/`.
 - Before the first AMO upload, decide whether `data_collection_permissions` should stay as the four categories or become `["none"]`. It depends on whether Mozilla counts data that goes only to Everhour as collection. See `docs/store-listing.md`.
+
+## 2026-11-26 — Firefox checked, ready for AMO
+
+**Checked.** The user loaded the repo folder as a temporary add-on in Firefox 161 and confirmed that the extension works on the test board. So in Firefox the MAIN-world hook captures `t` at `document_start` too, which was the one risk the docs couldn't settle.
+
+**Decided.** `data_collection_permissions` keeps its four required categories (`personallyIdentifyingInfo`, `authenticationInfo`, `websiteActivity` and `websiteContent`). Mozilla's add-on policy treats any data "handled outside of the add-on" as transmission. It has no exemption for data sent to the service the user is working in, and `"none"` is only for add-ons that send nothing. So Firefox asks users to accept these categories at install.
+
+**Done.** `docs/store-listing.md` now has ready-to-paste blocks for the AMO description and for the reviewer notes. The reviewer notes explain why the hook runs in the MAIN world. There is also a short note on how AMO signs and reviews.
+
+**Open.**
+
+- Submit to AMO (the user does this in the Developer Hub).
+- Once the listing is live, update the README's Firefox install section and the Release section of `CLAUDE.md` with the AMO link.
+- Mozilla has previews of a new Add-on Policies and Distribution Agreement dated 1 December 2026. Skim them for anything that affects this add-on.
