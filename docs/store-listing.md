@@ -114,7 +114,7 @@ Upload `dist/quick-time-log-<version>-firefox.zip` at <https://addons.mozilla.or
 ### Describe add-on
 
 - **Name** comes from `manifest.json`: Quick Time Log & Edit for Everhour on Trello
-- **Add-on URL:** `quick-time-log-everhour`
+- **Add-on URL:** `quick-time-log-everhour-trello`. The public page will be <https://addons.mozilla.org/firefox/addon/quick-time-log-everhour-trello/> and the edit page is <https://addons.mozilla.org/developers/addon/quick-time-log-everhour-trello/edit>.
 - **Summary** (at most 250 characters): See your Everhour week on Trello in a sidebar, and log, fix or delete entries without hunting through filters.
 - **Description** is plain text; paste the block below as is. It is the Chrome description with "side panel" changed to "sidebar":
 

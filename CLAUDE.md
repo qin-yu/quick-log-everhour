@@ -64,7 +64,7 @@ Everhour's endpoint details are in [docs/everhour-api.md](docs/everhour-api.md).
 ## Release
 
 - Distributed through the Chrome Web Store as **Public**: anyone can find and install it. Strangers will use it too, so an Everhour change that breaks it shows up as store reviews and GitHub issues, not just team messages.
-- Firefox: to be listed on addons.mozilla.org (not submitted yet as of 2026-11-25). The gecko ID `quick-log-everhour@qin-yu.github.io` must never change once uploaded.
+- Firefox: submitted to addons.mozilla.org as listed on 2026-11-26, slug `quick-time-log-everhour-trello`, waiting for signing and publication. The gecko ID `quick-log-everhour@qin-yu.github.io` must never change once uploaded.
 - Bump `version` in `manifest.json`, then run `npm run package`. It runs the unit tests, then for each browser writes that browser's manifest (checking that every file it references exists) and `dist/quick-time-log-<version>-<chrome|firefox>.zip` containing only `manifest.json`, `icons/*.png` and `src/`. Upload each zip to its store. `npx web-ext lint --source-dir dist/firefox` must report 0 errors.
 - Before uploading, run the end-to-end check on the test board in both browsers, and after any change to the hook, a read-only check on the real board in both.
 - [docs/store-listing.md](docs/store-listing.md) has the text for every field in both stores' dashboards: description, permission justifications and data-use answers. Keep it in step with what the code does, and keep [PRIVACY.md](PRIVACY.md) in step too.

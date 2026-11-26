@@ -324,3 +324,17 @@ The parts that differ are the panel (`side_panel` in Chrome, `sidebar_action` in
 - Submit to AMO (the user does this in the Developer Hub).
 - Once the listing is live, update the README's Firefox install section and the Release section of `CLAUDE.md` with the AMO link.
 - Mozilla has previews of a new Add-on Policies and Distribution Agreement dated 1 December 2026. Skim them for anything that affects this add-on.
+
+## 2026-11-26 — Submitted to AMO
+
+The user submitted `dist/quick-time-log-0.1.0-firefox.zip` to addons.mozilla.org as a listed add-on, using the text in `docs/store-listing.md`. The slug is `quick-time-log-everhour-trello`, not the `quick-time-log-everhour` the notes had suggested, and the notes now use it.
+
+- **Source code question:** answered No. The package holds the hand-written files as they are. The only processing is `scripts/manifest.js` removing the Chrome keys from `manifest.json`, which leaves a readable JSON file.
+- **Notes to reviewer:** the paste-ready block, which explains why the hook runs in the MAIN world.
+
+Right after submission, AMO's public API still returned 401 for the slug, because the add-on isn't public until it is signed. The `firefox` branch was merged into `main` and pushed, so the repo the listing links to now covers Firefox.
+
+**Open.**
+
+- Wait for the signing email.
+- Once the add-on is live, install it from AMO and remove the temporary copy. Then replace the "not on Firefox Add-ons yet" line in the README with the link, and mark the listing live in `CLAUDE.md`.
